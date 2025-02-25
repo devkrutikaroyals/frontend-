@@ -1,0 +1,110 @@
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #f9fafa;
+  padding: 20px; /* Ensures spacing around the container */
+}
+
+/* Larger Auth Box with Proper Padding & Margin */
+.auth-box {
+  display: flex;
+  width: 850px; /* Increased width */
+  background: white;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+  overflow: hidden;
+  margin: 40px auto; /* Centered with more space around */
+  padding: 40px; /* Increased internal padding */
+}
+
+/* Image section (No margin/padding applied here) */
+.auth-image {
+  flex: 1.2; /* Slightly bigger image section */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2f7;
+  border-top-left-radius: 15px;
+  border-bottom-left-radius: 15px;
+}
+
+.auth-image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* Form section */
+.auth-form {
+  flex: 1;
+  padding: 50px; /* More padding for a spacious form */
+  text-align: center;
+}
+
+.auth-form h2 {
+  margin-bottom: 25px;
+  font-size: 24px; /* Bigger title */
+  color: #333;
+}
+
+.auth-form input,
+.auth-form select {
+  width: 100%;
+  padding: 14px; /* Larger input fields */
+  margin: 12px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.auth-form button {
+  width: 100%;
+  padding: 14px; /* Larger button */
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.3s ease-in-out;
+}
+
+.auth-form button:hover {
+  background: #0056b3;
+}
+
+.auth-form p {
+  margin-top: 18px;
+  color: #666;
+  font-size: 14px;
+}
+
+.auth-form a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-form a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .auth-box {
+    width: 90%;
+    flex-direction: column;
+    padding: 30px; /* Keeps internal spacing on smaller screens */
+  }
+
+  .auth-image {
+    display: none; /* Hide image on smaller screens */
+  }
+
+  .auth-form {
+    width: 100%;
+    padding: 30px;
+  }
+}
