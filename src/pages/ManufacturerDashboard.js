@@ -52,7 +52,7 @@
 
 //   const fetchProducts = async () => {
 //     try {
-//       const response = await axios.get("https://newmedizon.onrender.com/api/products/manufacturer", {
+//       const response = await axios.get("http://localhost:5000/api/products/manufacturer", {
 //         headers: { Authorization: `Bearer ${getToken()}` },
 //       });
 //       setProducts(response.data);
@@ -64,13 +64,13 @@
 //   const fetchDashboardData = async () => {
 //     try {
 //       const [productRes, shipmentRes, orderRes] = await Promise.all([
-//         axios.get("https://newmedizon.onrender.com/api/manufacturedashboard/products", {
+//         axios.get("http://localhost:5000/api/manufacturedashboard/products", {
 //           headers: { Authorization: `Bearer ${getToken()}` },
 //         }),
-//         axios.get("https://newmedizon.onrender.com/api/manufacturedashboard/shipments", {
+//         axios.get("http://localhost:5000/api/manufacturedashboard/shipments", {
 //           headers: { Authorization: `Bearer ${getToken()}` },
 //         }),
-//         axios.get("https://newmedizon.onrender.com/api/manufacturedashboard/orders", {
+//         axios.get("http://localhost:5000/api/manufacturedashboard/orders", {
 //           headers: { Authorization: `Bearer ${getToken()}` },
 //         }),
 //       ]);
@@ -103,8 +103,8 @@
 
 //     try {
 //       const url = editProduct
-//         ? `https://newmedizon.onrender.com/api/products/${editProduct._id}`
-//         : "https://newmedizon.onrender.com/api/products";
+//         ? `http://localhost:5000/api/products/${editProduct._id}`
+//         : "http://localhost:5000/api/products";
 
 //       const method = editProduct ? "put" : "post";
 
@@ -138,7 +138,7 @@
 //     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
 //     try {
-//       await axios.delete(`https://newmedizon.onrender.com/api/products/${id}`, {
+//       await axios.delete(`http://localhost:5000/api/products/${id}`, {
 //         headers: { Authorization: `Bearer ${getToken()}` },
 //       });
 //       alert("Product deleted successfully!");
@@ -486,7 +486,7 @@ const ManufacturerDashboard = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("https://newmedizon.onrender.com/api/products/manufacturer", {
+      const response = await axios.get("http://localhost:5000/api/products/manufacturer", {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setProducts(response.data);
@@ -497,7 +497,7 @@ const ManufacturerDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get("https://newmedizon.onrender.com/api/manufacturers/dashboard", {
+      const response = await axios.get("http://localhost:5000/api/manufacturers/dashboard", {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setDashboardData(response.data);
@@ -526,8 +526,8 @@ const ManufacturerDashboard = () => {
 
     try {
       const url = editProduct
-        ? `https://newmedizon.onrender.com/api/products/${editProduct._id}`
-        : "https://newmedizon.onrender.com/api/products";
+        ? `http://localhost:5000/api/products/${editProduct._id}`
+        : "http://localhost:5000/api/products";
 
       const method = editProduct ? "put" : "post";
 
@@ -561,7 +561,7 @@ const ManufacturerDashboard = () => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      await axios.delete(`https://newmedizon.onrender.com/api/products/${id}`, {
+      await axios.delete(`http://localhost:5000/api/products/${id}`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       alert("Product deleted successfully!");
@@ -640,7 +640,7 @@ const ManufacturerDashboard = () => {
     try {
       const token = localStorage.getItem("token"); // Get stored token
       const response = await axios.put(
-        "https://newmedizon.onrender.com/api/auth/update-password",
+        "http://localhost:5000/api/auth/update-password",
         { email, oldPassword, newPassword },
         {
           headers: {

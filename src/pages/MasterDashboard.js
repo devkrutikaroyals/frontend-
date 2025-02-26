@@ -39,12 +39,12 @@
 //   // Fetch total products and companies counts
 //   useEffect(() => {
 //     axios
-//       .get("https://newmedizon.onrender.com/api/total-products")
+//       .get("http://localhost:5000/api/total-products")
 //       .then((response) => setTotalProducts(response.data.totalProducts || 0))
 //       .catch((error) => console.error("Error fetching products:", error));
 
 //     axios
-//       .get("https://newmedizon.onrender.com/api/total-companies")
+//       .get("http://localhost:5000/api/total-companies")
 //       .then((response) => setTotalCompanies(response.data.totalCompanies || 0))
 //       .catch((error) => console.error("Error fetching companies:", error));
 //   }, []);
@@ -55,7 +55,7 @@
 
 //     if (activeSection === "products") {
 //       axios
-//         .get("https://newmedizon.onrender.com/api/products/list", {
+//         .get("http://localhost:5000/api/products/list", {
 //           headers: {
 //             Authorization: `Bearer ${token}`, // Include token in headers
 //           },
@@ -66,7 +66,7 @@
 
 //     if (activeSection === "categories") {
 //       axios
-//         .get("https://newmedizon.onrender.com/api/categories", {
+//         .get("http://localhost:5000/api/categories", {
 //           headers: {
 //             Authorization: `Bearer ${token}`, // Include token in headers
 //           },
@@ -79,7 +79,7 @@
 
 //     if (activeSection === "companies") {
 //       axios
-//         .get("https://newmedizon.onrender.com/api/manufacturers", {
+//         .get("http://localhost:5000/api/manufacturers", {
 //           headers: {
 //             Authorization: `Bearer ${token}`, // Include token in headers
 //           },
@@ -98,7 +98,7 @@
 //   const fetchPendingManufacturers = async () => {
 //     try {
 //       const token = localStorage.getItem("token"); // Get stored token
-//       const response = await axios.get("https://newmedizon.onrender.com/api/auth/pending-manufacturers", {
+//       const response = await axios.get("http://localhost:5000/api/auth/pending-manufacturers", {
 //         headers: {
 //           Authorization: `Bearer ${token}`, // Include token in headers
 //         },
@@ -113,7 +113,7 @@
 //     try {
 //       const token = localStorage.getItem("token"); // Get stored token
 //       await axios.post(
-//         "https://newmedizon.onrender.com/api/auth/authorize",
+//         "http://localhost:5000/api/auth/authorize",
 //         { email },
 //         {
 //           headers: {
@@ -133,7 +133,7 @@
 //     try {
 //       const token = localStorage.getItem("token"); // Get stored token
 //       await axios.post(
-//         "https://newmedizon.onrender.com/api/auth/decline-manufacturer",
+//         "http://localhost:5000/api/auth/decline-manufacturer",
 //         { email },
 //         {
 //           headers: {
@@ -167,7 +167,7 @@
 //       const token = localStorage.getItem("token"); // Get stored token
 //       const userId = localStorage.getItem("userId"); // Replace with your actual logic
 //       const response = await axios.put(
-//         "https://newmedizon.onrender.com/api/update-password",
+//         "http://localhost:5000/api/update-password",
 //         { userId, oldPassword, newPassword },
 //         {
 //           headers: {
@@ -498,13 +498,13 @@ const MasterDashboard = () => {
   // Fetch total products and companies counts
   useEffect(() => {
     axios
-      .get("https://newmedizon.onrender.com/api/total-products")
+      .get("http://localhost:5000/api/total-products")
       .then((response) => setTotalProducts(response.data.totalProducts || 0))
       .catch((error) => console.error("Error fetching products:", error));
 
     axios
-      .get("https://newmedizon.onrender.com/api/total-manufacturers")
-      .then((response) => setTotalManufacturers(response.data.totalManufacturers || 0))
+      .get("http://localhost:5000/api/total-manufactures")
+      .then((response) => setTotalManufacturers(response.data.totalCompanies || 0))
       .catch((error) => console.error("Error fetching total manufacturers:", error));
   }, []);
 
@@ -514,7 +514,7 @@ const MasterDashboard = () => {
 
     if (activeSection === "products") {
       axios
-        .get("https://newmedizon.onrender.com/api/products/list", {
+        .get("http://localhost:5000/api/products/list", {
           headers: {
             Authorization: `Bearer ${token}`, // Include token in headers
           },
@@ -525,7 +525,7 @@ const MasterDashboard = () => {
 
     if (activeSection === "categories") {
       axios
-        .get("https://newmedizon.onrender.com/api/categories", {
+        .get("http://localhost:5000/api/categories", {
           headers: {
             Authorization: `Bearer ${token}`, // Include token in headers
           },
@@ -538,7 +538,7 @@ const MasterDashboard = () => {
 
     if (activeSection === "companies") {
       axios
-        .get("https://newmedizon.onrender.com/api/manufacturers", {
+        .get("http://localhost:5000/api/manufacturers", {
           headers: {
             Authorization: `Bearer ${token}`, // Include token in headers
           },
@@ -557,7 +557,7 @@ const MasterDashboard = () => {
   const fetchPendingManufacturers = async () => {
     try {
       const token = localStorage.getItem("token"); // Get stored token
-      const response = await axios.get("https://newmedizon.onrender.com/api/auth/pending-manufacturers", {
+      const response = await axios.get("http://localhost:5000/api/auth/pending-manufacturers", {
         headers: {
           Authorization: `Bearer ${token}`, // Include token in headers
         },
@@ -572,7 +572,7 @@ const MasterDashboard = () => {
     try {
       const token = localStorage.getItem("token"); // Get stored token
       await axios.post(
-        "https://newmedizon.onrender.com/api/auth/authorize",
+        "http://localhost:5000/api/auth/authorize",
         { email },
         {
           headers: {
@@ -592,7 +592,7 @@ const MasterDashboard = () => {
     try {
       const token = localStorage.getItem("token"); // Get stored token
       await axios.post(
-        "https://newmedizon.onrender.com/api/auth/decline-manufacturer",
+        "http://localhost:5000/api/auth/decline-manufacturer",
         { email },
         {
           headers: {
@@ -626,7 +626,7 @@ const MasterDashboard = () => {
     try {
       const token = localStorage.getItem("token"); // Get stored token
       const response = await axios.put(
-        "https://newmedizon.onrender.com/api/auth/update-password",
+        "http://localhost:5000/api/auth/update-password",
         { email, oldPassword, newPassword },
         {
           headers: {

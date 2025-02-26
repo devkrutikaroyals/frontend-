@@ -1,6 +1,6 @@
 export const createProduct = async (productData) => {
     try {
-      const response = await fetch("https://newmedizon.onrender.com/api/products/create", {
+      const response = await fetch("http://localhost:5000/api/products/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
