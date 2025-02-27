@@ -497,7 +497,7 @@ const ManufacturerDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get("https://newmedizon.onrender.com/api/manufacturers/dashboard", {
+      const response = await axios.get("https://newmedizon.onrender.com/api/products/manufacturer", {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setDashboardData(response.data);
