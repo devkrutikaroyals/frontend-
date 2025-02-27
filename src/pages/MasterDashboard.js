@@ -1,6 +1,4 @@
 
-
-
 // import React, { useState, useEffect } from "react";
 // import { useNavigate } from "react-router-dom";
 // import axios from "axios";
@@ -21,7 +19,7 @@
 // const MasterDashboard = () => {
 //   const [isCollapsed, setIsCollapsed] = useState(false);
 //   const [totalProducts, setTotalProducts] = useState(0);
-//   const [totalManufacturers, setTotalManufacturers] = useState(0);
+//   const [totalCompanies, setTotalCompanies] = useState(0);
 //   const [activeSection, setActiveSection] = useState("dashboard");
 //   const [products, setProducts] = useState([]);
 //   const [categories, setCategories] = useState([]);
@@ -46,9 +44,9 @@
 //       .catch((error) => console.error("Error fetching products:", error));
 
 //     axios
-//       .get("https://newmedizon.onrender.com/api/total-manufactures")
-//       .then((response) => setTotalManufacturers(response.data.totalCompanies || 0))
-//       .catch((error) => console.error("Error fetching total manufacturers:", error));
+//       .get("https://newmedizon.onrender.com/api/total-companies")
+//       .then((response) => setTotalCompanies(response.data.totalCompanies || 0))
+//       .catch((error) => console.error("Error fetching companies:", error));
 //   }, []);
 
 //   // Fetch data based on active section
@@ -165,34 +163,23 @@
 //       setError("Passwords do not match");
 //       return;
 //     }
-
 //     try {
 //       const token = localStorage.getItem("token"); // Get stored token
+//       const userId = localStorage.getItem("userId"); // Replace with your actual logic
 //       const response = await axios.put(
-//         "https://newmedizon.onrender.com/api/auth/update-password",
-//         { email, oldPassword, newPassword },
+//         "https://newmedizon.onrender.com/api/update-password",
+//         { userId, oldPassword, newPassword },
 //         {
 //           headers: {
 //             Authorization: `Bearer ${token}`, // Include token in headers
 //           },
 //         }
 //       );
-
-//       // Clear form and show success message
-//       setEmail("");
-//       setOldPassword("");
-//       setNewPassword("");
-//       setConfirmPassword("");
-//       setError("");
 //       setMessage(response.data.message);
-
-//       // Redirect to login page after 2 seconds
-//       setTimeout(() => {
-//         navigate("/login");
-//       }, 2000);
+//       setError("");
 //     } catch (error) {
 //       setMessage("");
-//       setError(error.response?.data?.message || "Error updating password.");
+//       setError(error.response?.data?.message || "Error updating password");
 //     }
 //   };
 
@@ -214,6 +201,7 @@
 //       <div className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
 //         <div className="sidebar-logo">
 //           <img src={logo} alt="Company Logo" />
+//           {!isCollapsed && <span>Master Dashboard</span>}
 //         </div>
 //         <button className="toggle-btn" onClick={toggleSidebar}>
 //           <FaBars />
@@ -277,197 +265,198 @@
 //           </div>
 //         </div>
 
-//         {activeSection === "dashboard" && (
-//           <div className="stats">
-//             <div className="stat-box">
-//               <h3>Total Products</h3>
-//               <p>{totalProducts}</p>
+//         <div className="main-content">
+//           {activeSection === "dashboard" && (
+//             <div className="stats">
+//               <div className="stat-box">
+//                 <h3>Total Products</h3>
+//                 <p>{totalProducts}</p>
+//               </div>
+//               <div className="stat-box">
+//                 <h3>Total Manufacturer</h3>
+//                 <p>{totalCompanies}</p>
+//               </div>
 //             </div>
-//             <div className="stat-box">
-//               <h3>Total Manufacturers</h3>
-//               <p>{totalManufacturers}</p>
-//             </div>
-//           </div>
-//         )}
+//           )}
 
-//         {activeSection === "products" && (
-//           <div>
-//             <h3>Products</h3>
-//             <input
-//               type="text"
-//               placeholder="Search products..."
-//               value={searchQuery}
-//               onChange={(e) => setSearchQuery(e.target.value)}
-//               className="search-bar"
-//             />
-//             <div className="product-list">
-//               {Array.isArray(products) &&
-//                 products
-//                   .filter((product) =>
-//                     product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//                     product.manufacturer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//                     product.category?.toLowerCase().includes(searchQuery.toLowerCase())
-//                   )
-//                   .map((product) => (
-//                     <div key={product._id} className="product-card">
-//                       <img src={product.imageUrl} alt={product.name} />
-//                       <h4>{product.name}</h4>
-//                       <p>
-//                         <strong>Manufacturer:</strong> {product.manufacturer?.name}
-//                       </p>
-//                       <p>{product.description}</p>
-//                       <p>
-//                         <strong>Price:</strong> ₹{product.price}
-//                       </p>
-//                       <p>
-//                         <strong>Category:</strong> {product.category}
-//                       </p>
-//                       <p>
-//                         <strong>Stock:</strong> {product.stock}
-//                       </p>
-//                     </div>
-//                   ))}
-//             </div>
-//           </div>
-//         )}
-
-//         {activeSection === "categories" && (
-//           <div>
-//             <h3>Categories</h3>
-//             <input
-//               type="text"
-//               placeholder="Search categories..."
-//               value={searchQuery}
-//               onChange={(e) => setSearchQuery(e.target.value)}
-//               className="search-bar"
-//             />
-//             <div className="category-list">
-//               {Array.isArray(categories) &&
-//                 categories
-//                   .filter((category) =>
-//                     category.category?.toLowerCase().includes(searchQuery.toLowerCase())
-//                   )
-//                   .map((category, index) => (
-//                     <div key={index} className="category-card">
-//                       <img src={category.imageUrl} alt={category.category} />
-//                       <h4>{category.category}</h4>
-//                     </div>
-//                   ))}
-//             </div>
-//           </div>
-//         )}
-
-//         {activeSection === "companies" && (
-//           <div>
-//             <h3>Manufacturers</h3>
-//             <div className="search-container">
+//           {activeSection === "products" && (
+//             <div>
+//               <h3>Products</h3>
 //               <input
 //                 type="text"
-//                 placeholder="Search manufacturers..."
+//                 placeholder="Search products..."
 //                 value={searchQuery}
 //                 onChange={(e) => setSearchQuery(e.target.value)}
 //                 className="search-bar"
 //               />
-//               <button onClick={() => { /* Implement search functionality if needed */ }}>
-//                 Search
-//               </button>
-//             </div>
-//             <table className="manufacturer-table">
-//               <thead>
-//                 <tr>
-//                   <th>Manufacturer Name</th>
-//                   <th>Manufacturer Email</th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {Array.isArray(manufacturers) &&
-//                   manufacturers
-//                     .filter((manufacturer) =>
-//                       manufacturer.name?.toLowerCase().includes(searchQuery.toLowerCase())
+//               <div className="product-list">
+//                 {Array.isArray(products) &&
+//                   products
+//                     .filter((product) =>
+//                       product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+//                       product.manufacturer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+//                       product.category?.toLowerCase().includes(searchQuery.toLowerCase())
 //                     )
-//                     .map((manufacturer) => (
-//                       <tr key={manufacturer._id}>
-//                         <td>{manufacturer.name}</td>
-//                         <td>{manufacturer.email}</td>
-//                       </tr>
+//                     .map((product) => (
+//                       <div key={product._id} className="product-card">
+//                         <img src={product.imageUrl} alt={product.name} />
+//                         <h4>{product.name}</h4>
+//                         <p>
+//                           <strong>Manufacturer:</strong> {product.manufacturer?.name}
+//                         </p>
+//                         <p>{product.description}</p>
+//                         <p>
+//                           <strong>Price:</strong> ₹{product.price}
+//                         </p>
+//                         <p>
+//                           <strong>Category:</strong> {product.category}
+//                         </p>
+//                         <p>
+//                           <strong>Stock:</strong> {product.stock}
+//                         </p>
+//                       </div>
 //                     ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         )}
+//               </div>
+//             </div>
+//           )}
 
-//         {activeSection === "pending-approvals" && (
-//           <div className="pending-approvals">
-//             <h2>Pending Manufacturer Approvals</h2>
-//             {pendingManufacturers.length === 0 ? (
-//               <p>No pending manufacturers.</p>
-//             ) : (
-//               <ul>
-//                 {pendingManufacturers.map((manufacturer, index) => (
-//                   <li key={index}>
-//                     <span>
-//                       {manufacturer.name} - {manufacturer.email}
-//                     </span>
-//                     <button onClick={() => handleApprove(manufacturer.email)}>Approve</button>
-//                     <button onClick={() => handleDecline(manufacturer.email)}>Decline</button>
-//                   </li>
-//                 ))}
-//               </ul>
-//             )}
-//           </div>
-//         )}
+//           {activeSection === "categories" && (
+//             <div>
+//               <h3>Categories</h3>
+//               <input
+//                 type="text"
+//                 placeholder="Search categories..."
+//                 value={searchQuery}
+//                 onChange={(e) => setSearchQuery(e.target.value)}
+//                 className="search-bar"
+//               />
+//               <div className="category-list">
+//                 {Array.isArray(categories) &&
+//                   categories
+//                     .filter((category) =>
+//                       category.category?.toLowerCase().includes(searchQuery.toLowerCase())
+//                     )
+//                     .map((category, index) => (
+//                       <div key={index} className="category-card">
+//                         <img src={category.imageUrl} alt={category.category} />
+//                         <h4>{category.category}</h4>
+//                       </div>
+//                     ))}
+//               </div>
+//             </div>
+//           )}
 
-//         {activeSection === "settings" && (
-//           <div className="settings-form">
-//             <h3>Settings</h3>
-//             <div className="form-group">
-//               <label>Email ID</label>
-//               <input
-//                 type="email"
-//                 placeholder="Enter your email"
-//                 value={email}
-//                 onChange={(e) => setEmail(e.target.value)}
-//               />
+//           {activeSection === "companies" && (
+//             <div>
+//               <h3>Manufacturers</h3>
+//               <div className="search-container">
+//                 <input
+//                   type="text"
+//                   placeholder="Search manufacturers..."
+//                   value={searchQuery}
+//                   onChange={(e) => setSearchQuery(e.target.value)}
+//                   className="search-bar"
+//                 />
+//                 <button onClick={() => { /* Implement search functionality if needed */ }}>
+//                   Search
+//                 </button>
+//               </div>
+//               <table className="manufacturer-table">
+//                 <thead>
+//                   <tr>
+//                     <th>Manufacturer Name</th>
+//                     <th>Manufacturer Email</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody>
+//                   {Array.isArray(manufacturers) &&
+//                     manufacturers
+//                       .filter((manufacturer) =>
+//                         manufacturer.name?.toLowerCase().includes(searchQuery.toLowerCase())
+//                       )
+//                       .map((manufacturer) => (
+//                         <tr key={manufacturer._id}>
+//                           <td>{manufacturer.name}</td>
+//                           <td>{manufacturer.email}</td>
+//                         </tr>
+//                       ))}
+//                 </tbody>
+//               </table>
 //             </div>
-//             <div className="form-group">
-//               <label>Old Password</label>
-//               <input
-//                 type="password"
-//                 placeholder="Enter old password"
-//                 value={oldPassword}
-//                 onChange={(e) => setOldPassword(e.target.value)}
-//               />
+//           )}
+
+//           {activeSection === "pending-approvals" && (
+//             <div className="pending-approvals">
+//               <h2>Pending Manufacturer Approvals</h2>
+//               {pendingManufacturers.length === 0 ? (
+//                 <p>No pending manufacturers.</p>
+//               ) : (
+//                 <ul>
+//                   {pendingManufacturers.map((manufacturer, index) => (
+//                     <li key={index}>
+//                       <span>
+//                         {manufacturer.name} - {manufacturer.email}
+//                       </span>
+//                       <button onClick={() => handleApprove(manufacturer.email)}>Approve</button>
+//                       <button onClick={() => handleDecline(manufacturer.email)}>Decline</button>
+//                     </li>
+//                   ))}
+//                 </ul>
+//               )}
 //             </div>
-//             <div className="form-group">
-//               <label>New Password</label>
-//               <input
-//                 type="password"
-//                 placeholder="Enter new password"
-//                 value={newPassword}
-//                 onChange={(e) => setNewPassword(e.target.value)}
-//               />
+//           )}
+
+//           {activeSection === "settings" && (
+//             <div className="settings-form">
+//               <h3>Settings</h3>
+//               <div className="form-group">
+//                 <label>Email ID</label>
+//                 <input
+//                   type="email"
+//                   placeholder="Enter your email"
+//                   value={email}
+//                   onChange={(e) => setEmail(e.target.value)}
+//                 />
+//               </div>
+//               <div className="form-group">
+//                 <label>Old Password</label>
+//                 <input
+//                   type="password"
+//                   placeholder="Enter old password"
+//                   value={oldPassword}
+//                   onChange={(e) => setOldPassword(e.target.value)}
+//                 />
+//               </div>
+//               <div className="form-group">
+//                 <label>New Password</label>
+//                 <input
+//                   type="password"
+//                   placeholder="Enter new password"
+//                   value={newPassword}
+//                   onChange={(e) => setNewPassword(e.target.value)}
+//                 />
+//               </div>
+//               <div className="form-group">
+//                 <label>Confirm Password</label>
+//                 <input
+//                   type="password"
+//                   placeholder="Confirm new password"
+//                   value={confirmPassword}
+//                   onChange={(e) => setConfirmPassword(e.target.value)}
+//                 />
+//               </div>
+//               {message && <p className="success-message">{message}</p>}
+//               {error && <p className="error-message">{error}</p>}
+//               <button onClick={handlePasswordUpdate}>Update Password</button>
 //             </div>
-//             <div className="form-group">
-//               <label>Confirm Password</label>
-//               <input
-//                 type="password"
-//                 placeholder="Confirm new password"
-//                 value={confirmPassword}
-//                 onChange={(e) => setConfirmPassword(e.target.value)}
-//               />
-//             </div>
-//             {message && <p className="success-message">{message}</p>}
-//             {error && <p className="error-message">{error}</p>}
-//             <button onClick={handlePasswordUpdate}>Update Password</button>
-//           </div>
-//         )}
+//           )}
+//         </div>
 //       </div>
 //     </div>
 //   );
 // };
 
 // export default MasterDashboard;
-
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
