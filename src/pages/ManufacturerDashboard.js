@@ -483,16 +483,16 @@ const ManufacturerDashboard = () => {
     }
     return token;
   };
-
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("https://newmedizon.onrender.com/api/products/manufacturer", {
+      const response = await axios.get("http://localhost:3000/api/products/manufacturer", {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
-      setProducts(response.data.products);
-    
+      console.log("API Response:", response.data); // Log the response
+      setProducts(response.data.products || []); // Fallback to an empty array if products is undefined
     } catch (error) {
       console.error("Error fetching products:", error);
+      setProducts([]); // Set products to an empty array in case of error
     }
   };
 
@@ -745,64 +745,63 @@ const ManufacturerDashboard = () => {
           </div>
         )}
 
-        {activePage === "products" && (
-          <div className="products-container">
-            <h2>Products</h2>
-            <button className="add-product-btn" onClick={() => openModal()}>
-              <FaPlus /> Add Product
-            </button>
-            <table>
-              <thead>
-                <tr>
-                  <th>Image</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Price</th>
-                  <th>Category</th>
-                  <th>Stock</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.length > 0 ? (
-                  products.map((product) => (
-                    <tr key={product._id}>
-                      <td>
-                        {product.imageUrl && (
-                          <img 
-                            src={product.imageUrl} 
-                            alt={product.name}
-                            className="product-image"
-                          />
-                        )}
-                      </td>
-                      <td>{product.name}</td>
-                      <td className="description-cell">
-                        {product.description || "No description"}
-                      </td>
-                      <td>${product.price}</td>
-                      <td>{product.category}</td>
-                      <td>{product.stock}</td>
-                      <td>
-                        <button onClick={() => openModal(product)}>
-                          <FaEdit />
-                        </button>
-                        <button onClick={() => deleteProduct(product._id)}>
-                          <FaTrash />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7">No products available</td>
-                  </tr>
+{activePage === "products" && (
+  <div className="products-container">
+    <h2>Products</h2>
+    <button className="add-product-btn" onClick={() => openModal()}>
+      <FaPlus /> Add Product
+    </button>
+    <table>
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Price</th>
+          <th>Category</th>
+          <th>Stock</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {products.length > 0 ? (
+          products.map((product) => (
+            <tr key={product._id}>
+              <td>
+                {product.imageUrl && (
+                  <img 
+                    src={product.imageUrl} 
+                    alt={product.name}
+                    className="product-image"
+                  />
                 )}
-              </tbody>
-            </table>
-          </div>
+              </td>
+              <td>{product.name}</td>
+              <td className="description-cell">
+                {product.description || "No description"}
+              </td>
+              <td>${product.price}</td>
+              <td>{product.category}</td>
+              <td>{product.stock}</td>
+              <td>
+                <button onClick={() => openModal(product)}>
+                  <FaEdit />
+                </button>
+                <button onClick={() => deleteProduct(product._id)}>
+                  <FaTrash />
+                </button>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan="7">No products available. Click "Add Product" to create one.</td>
+          </tr>
         )}
-
+      </tbody>
+    </table>
+  </div>
+)}
         {isModalOpen && (
           <div className="modal-overlay">
             <div className="modal">
