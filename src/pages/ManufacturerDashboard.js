@@ -446,7 +446,8 @@ const ManufacturerDashboard = () => {
   const [error, setError] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [pendingManufacturers, setPendingManufacturers] = useState([]);
+
+  
   const [email, setEmail] = useState("");
   const [formValues, setFormValues] = useState({
     name: "",

@@ -1393,3 +1393,25 @@ const MasterDashboard = () => {
 };
 
 export default MasterDashboard;
+
+
+
+const handleDecline = async (email) => {
+  try {
+    const token = localStorage.getItem("token"); // Get stored token
+    await axios.post(
+      "https://newmedizon.onrender.com/api/auth/decline-manufacturer",
+      { email },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include token in headers
+        },
+      }
+    );
+    alert("❌ Manufacturer declined!");
+    fetchPendingManufacturers();
+  } catch (error) {
+    console.error("Decline error:", error);
+    alert("❌ Decline failed! " + (error.response?.data?.message || "Please try again."));
+  }
+};
