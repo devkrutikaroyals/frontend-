@@ -486,7 +486,7 @@ const ManufacturerDashboard = () => {
   };
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/products/manufacturer", {
+      const response = await axios.get("https://newmedizon.onrender.com/api/products/manufacturer", {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       console.log("API Response:", response.data); // Log the response
