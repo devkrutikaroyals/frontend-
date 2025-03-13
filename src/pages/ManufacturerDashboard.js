@@ -780,7 +780,9 @@ const ManufacturerDashboard = () => {
                     className="product-image"
                   />
                 )}
+                {console.log(products)}
               </td>
+              
               <td>{product.name}</td>
               <td className="description-cell">
                 {product.description || "No description"}
