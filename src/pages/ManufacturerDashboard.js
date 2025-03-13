@@ -490,8 +490,8 @@ const ManufacturerDashboard = () => {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       console.log("API Response:", response.data.products); // Log the response
-      setProducts(response.data.products || []);
-       console.log(response.data);
+      setProducts(response.data || []);
+      
       
        // Fallback to an empty array if products is undefined
     } catch (error) {
