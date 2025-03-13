@@ -491,6 +491,8 @@ const ManufacturerDashboard = () => {
       });
       console.log("API Response:", response.data.products); // Log the response
       setProducts(response.data.products || []);
+     
+      
        // Fallback to an empty array if products is undefined
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -503,7 +505,7 @@ const ManufacturerDashboard = () => {
       const response = await axios.get("https://newmedizon.onrender.com/api/products/manufacturer", {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
-      setDashboardData(response.data.product);
+      setDashboardData(response.data.);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     }
