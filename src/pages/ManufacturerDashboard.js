@@ -502,7 +502,7 @@ const ManufacturerDashboard = () => {
       const response = await axios.get("https://newmedizon.onrender.com/api/products/manufacturer", {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
-      setDashboardData(response.data);
+      setDashboardData(response.data.products);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     }
