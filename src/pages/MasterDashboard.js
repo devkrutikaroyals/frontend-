@@ -928,7 +928,8 @@
 
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
+
 import axios from "axios";
 import {
   FaBars,
@@ -943,7 +944,7 @@ import {
 } from "react-icons/fa";
 import logo from "../images/logo.jpg";
 import "../styles/MasterDashboard.css";
-
+import { useNavigate } from "react-router-dom";
 const MasterDashboard = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [totalProducts, setTotalProducts] = useState(0);
@@ -1395,23 +1396,3 @@ const MasterDashboard = () => {
 export default MasterDashboard;
 
 
-
-const handleDecline = async (email) => {
-  try {
-    const token = localStorage.getItem("token"); // Get stored token
-    await axios.post(
-      "https://newmedizon.onrender.com/api/auth/decline-manufacturer",
-      { email },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // Include token in headers
-        },
-      }
-    );
-    alert("❌ Manufacturer declined!");
-    fetchPendingManufacturers();
-  } catch (error) {
-    console.error("Decline error:", error);
-    alert("❌ Decline failed! " + (error.response?.data?.message || "Please try again."));
-  }
-};

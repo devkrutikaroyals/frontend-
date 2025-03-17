@@ -491,7 +491,7 @@ const ManufacturerDashboard = () => {
       });
       console.log("API Response:", response.data.products); // Log the response
       setProducts(response.data.products || []);
-      console.log(response.data);
+      
       
       
        // Fallback to an empty array if products is undefined
@@ -780,7 +780,7 @@ const ManufacturerDashboard = () => {
                     className="product-image"
                   />
                 )}
-                {console.log(products)}
+              
               </td>
               
               <td>{product.name}</td>
