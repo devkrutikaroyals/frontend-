@@ -322,7 +322,26 @@ body, html {
   object-fit: cover;
   border-radius: 3px;
 }
+.back-button {
+  background-color: #007bff; /* Bootstrap primary color */
+  color: white; /* Text color */
+  border: none; /* No border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 10px 15px; /* Padding */
+  font-size: 16px; /* Font size */
+  cursor: pointer; /* Pointer cursor on hover */
+  display: flex; /* Flexbox for icon and text alignment */
+  align-items: center; /* Center items vertically */
+  margin-bottom: 20px; /* Space below the button */
+}
 
+.back-button:hover {
+  background-color: #0056b3; /* Darker shade on hover */
+}
+
+.back-button svg {
+  margin-right: 5px; /* Space between icon and text */
+} 
 
 /* SETTINGS FORM */
 .settings-form {

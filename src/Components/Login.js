@@ -10,25 +10,24 @@ const Login = () => {
   const [role, setRole] = useState("manufacturer"); // Default role
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+  
     try {
       const response = await axios.post("https://newmedizon.onrender.com/api/auth/login", {
         email,
         password,
         role,
       });
-
+  
       if (response.status === 200) {
         const { token, user, redirect } = response.data;
-
+  
         localStorage.setItem("token", token);
         localStorage.setItem("role", user.role);
         localStorage.setItem("userId", user._id);
-
+  
         alert("✅ Login successful!");
         navigate(redirect);
       }
