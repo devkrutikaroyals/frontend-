@@ -1736,6 +1736,7 @@ const ManufacturerDashboard = () => {
     price: "",
     category: "",
     stock: "",
+    location: "",
     imageUrl: "",
     imageFile: null,
   });
@@ -1771,6 +1772,21 @@ const ManufacturerDashboard = () => {
     "Respiratory Care",
     "Respiratory Equipment",
     "Surgical",
+  ];
+
+  const locations = [
+    "Nagpur",
+    "Amravati",
+    "Mumabai",
+    "Pune",
+    "Aurangabad",
+    "Nashik",
+    "Thane",
+    "Bhopal",
+    "Indore",
+    "Gwalior",
+    "Jabalpur",
+    
   ];
 
   const navigate = useNavigate();
@@ -2049,10 +2065,7 @@ const ManufacturerDashboard = () => {
             <FaClipboardList />
             <span>Orders</span>
           </li>
-          {/* <li onClick={() => setActivePage("shipments")}>
-            <FaTruck />
-            <span>Shipments</span>
-          </li> */}
+       
           <li onClick={() => setActivePage("settings")}>
             <FaCogs />
             <span>Settings</span>
@@ -2106,13 +2119,14 @@ const ManufacturerDashboard = () => {
             </button>
             <table>
               <thead>
-                <tr>
+              <tr>
                   <th>Image</th>
                   <th>Name</th>
                   <th>Description</th>
                   <th>Price</th>
                   <th>Category</th>
                   <th>Stock</th>
+                  <th>Location</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -2136,6 +2150,7 @@ const ManufacturerDashboard = () => {
                       <td>${product.price}</td>
                       <td>{product.category}</td>
                       <td>{product.stock}</td>
+                      <td>{product.location}</td>
                       <td>
                         <button onClick={() => openModal(product)}>
                           <FaEdit />
