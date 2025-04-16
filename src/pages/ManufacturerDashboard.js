@@ -1700,6 +1700,7 @@
 // export default ManufacturerDashboard;
 
 
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from '@supabase/supabase-js';
@@ -1712,7 +1713,7 @@ import logo from "../images/logo.jpg";
 import "../styles/ManufacturerDashboard.css";
 
 const SUPABASE_URL = 'https://wxcqhslupuixynbjgncf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4Y3Foc2x1cHVpeHluYmpnbmNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MjYyNjEsImV4cCI6MjA1NzAwMjI2MX0.u6vJb-zV6rFUU3HGpgNgQlmxDZfTgbpDcxTgbmEZeM0'; // Ensure this is secure
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4Y3Foc2x1cHVpeHluYmpnbmNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MjYyNjEsImV4cCI6MjA1NzAwMjI2MX0.u6vJb-zV6rFUU3HGpgNgQlmxDZfTgbpDcxTgbmEZeM0';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const ManufacturerDashboard = () => {
@@ -1744,7 +1745,6 @@ const ManufacturerDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     totalProducts: 0,
     totalOrders: 0,
-   
   });
 
   const categories = [
@@ -1865,8 +1865,8 @@ const ManufacturerDashboard = () => {
 
   const saveProduct = async (e) => {
     e.preventDefault();
-    if (!formValues.name || !formValues.price || !formValues.stock || !formValues.category) {
-      alert("Please fill required fields");
+    if (!formValues.name || !formValues.price || !formValues.stock || !formValues.category || !formValues.location) {
+      alert("Please fill all required fields");
       return;
     }
 
@@ -1876,6 +1876,7 @@ const ManufacturerDashboard = () => {
     formData.append("price", formValues.price);
     formData.append("category", formValues.category);
     formData.append("stock", formValues.stock);
+    formData.append("location", formValues.location);
     if (formValues.imageFile) {
       formData.append("imageFile", formValues.imageFile);
     }
@@ -1934,6 +1935,7 @@ const ManufacturerDashboard = () => {
         price: product.price || "",
         category: product.category || "",
         stock: product.stock || "",
+        location: product.location || "",
         imageUrl: product.imageUrl || "",
         imageFile: null,
       });
@@ -1955,6 +1957,7 @@ const ManufacturerDashboard = () => {
       price: "",
       category: "",
       stock: "",
+      location: "",
       imageUrl: "",
       imageFile: null,
     });
@@ -1984,7 +1987,6 @@ const ManufacturerDashboard = () => {
 
     setFormValues((prevState) => ({ ...prevState, [name]: value }));
   };
-
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -2065,7 +2067,6 @@ const ManufacturerDashboard = () => {
             <FaClipboardList />
             <span>Orders</span>
           </li>
-       
           <li onClick={() => setActivePage("settings")}>
             <FaCogs />
             <span>Settings</span>
@@ -2102,11 +2103,6 @@ const ManufacturerDashboard = () => {
                 <div className="view-all-btn"
                 onClick={() => setActivePage("products")}>View All</div>
               </div>
-              {/* <div className="card">
-                <h3>Total Shipments</h3>
-                <p>{dashboardData.totalShipments}</p>
-                <div className="view-all-btn">View All</div>
-              </div> */}
             </div>
           </div>
         )}
@@ -2119,7 +2115,7 @@ const ManufacturerDashboard = () => {
             </button>
             <table>
               <thead>
-              <tr>
+                <tr>
                   <th>Image</th>
                   <th>Name</th>
                   <th>Description</th>
@@ -2163,7 +2159,7 @@ const ManufacturerDashboard = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7">No products available. Click "Add Product" to create one.</td>
+                    <td colSpan="8">No products available. Click "Add Product" to create one.</td>
                   </tr>
                 )}
               </tbody>
@@ -2224,6 +2220,20 @@ const ManufacturerDashboard = () => {
                   placeholder="Product Stock"
                   required
                 />
+                <label>Location</label>
+                <select
+                  name="location"
+                  value={formValues.location}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Select a location</option>
+                  {locations.map((location, index) => (
+                    <option key={index} value={location}>
+                      {location}
+                    </option>
+                  ))}
+                </select>
                 <label>Product Image</label>
                 <input 
                   type="file" 
@@ -2255,7 +2265,7 @@ const ManufacturerDashboard = () => {
           </div>
         )}
 
-{activePage === "orders" && (
+        {activePage === "orders" && (
           <div className="orders-container">
             <h2>Orders</h2>
             <table>
@@ -2283,7 +2293,7 @@ const ManufacturerDashboard = () => {
                       <td>{order.payment_method}</td>
                       <td>{JSON.stringify(order.items)}</td>
                       <td>{new Date(order.created_at).toLocaleString()}</td>
-                    </tr>
+                    </tr>
                   ))
                 ) : (
                   <tr>
@@ -2295,7 +2305,7 @@ const ManufacturerDashboard = () => {
           </div>
         )}
 
-{activePage === "settings" && (
+        {activePage === "settings" && (
           <div className="settings-form">
             <h3>Settings</h3>
             <div className="form-group">
