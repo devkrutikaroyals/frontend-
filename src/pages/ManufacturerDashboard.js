@@ -1968,11 +1968,11 @@ const ManufacturerDashboard = () => {
     const { name, value } = e.target;
 
     // Validation logic
-    if (name === "name" && value.length > 10) {
+    if (name === "name" && value.length > 30) {
       alert("Name should not exceed 10 characters.");
       return;
     }
-    if (name === "description" && value.length > 20) {
+    if (name === "description" && value.length > 30) {
       alert("Description should not exceed 20 characters.");
       return;
     }
