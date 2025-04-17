@@ -1968,14 +1968,15 @@ const ManufacturerDashboard = () => {
     const { name, value } = e.target;
 
     // Validation logic
-    if (name === "name" && value.length > 30) {
-      alert("Name should not exceed 10 characters.");
+    if (name === "name" && value.length > 50) {
+      alert("Name should not exceed 50 characters.");
       return;
     }
-    if (name === "description" && value.length > 30) {
+    if (name === "description" && value.length > 20) {
       alert("Description should not exceed 20 characters.");
       return;
     }
+    
     if (name === "price" && (value.length > 5 || isNaN(value))) {
       alert("Price should be a number with a maximum of 5 digits.");
       return;
