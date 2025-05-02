@@ -1,9 +1,10 @@
 /* MasterDashboard.css */
-* {
+* body{
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: 'Arial', sans-serif;
+  
 }
 
 body, html {
@@ -76,19 +77,22 @@ body, html {
 
 /* LOGOUT BUTTON */
 .logout-btn {
-  background: #e74c3c;
+  background: #f41a02;
   color: #fff;
   border: none;
   padding: 15px;
   cursor: pointer;
   text-align: center;
-  width: 100%;
+  width: 80%;
   font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   transition: background 0.3s ease;
+margin-bottom: 20px;
+border-radius: 20px;
+height: 40px;
 }
 
 .logout-btn:hover {
@@ -114,7 +118,7 @@ body, html {
 }
 
 /* HEADER */
-.header {
+.header-master {
   display: flex;
   justify-content: space-between;
   background-color: #34495e; /* Darker header */
@@ -301,47 +305,6 @@ body, html {
   color: #333;
   font-weight: bold;
 }
-.dropdown {
-  margin-top: 10px;
-  padding: 10px;
-  background: #f9f9f9;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.product-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 0;
-}
-
-.product-item img {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 3px;
-}
-.back-button {
-  background-color: #007bff; /* Bootstrap primary color */
-  color: white; /* Text color */
-  border: none; /* No border */
-  border-radius: 5px; /* Rounded corners */
-  padding: 10px 15px; /* Padding */
-  font-size: 16px; /* Font size */
-  cursor: pointer; /* Pointer cursor on hover */
-  display: flex; /* Flexbox for icon and text alignment */
-  align-items: center; /* Center items vertically */
-  margin-bottom: 20px; /* Space below the button */
-}
-
-.back-button:hover {
-  background-color: #0056b3; /* Darker shade on hover */
-}
-
-.back-button svg {
-  margin-right: 5px; /* Space between icon and text */
-} 
 
 /* SETTINGS FORM */
 .settings-form {
@@ -597,3 +560,157 @@ body, html {
   color: #27ae60;
   font-weight: 500;
 }
+.back-button {
+  background-color: #007bff; /* Bootstrap primary color */
+  color: white; /* Text color */
+  border: none; /* No border */
+  border-radius: 5px; /* Rounded corners */
+  padding: 10px 15px; /* Padding */
+  font-size: 16px; /* Font size */
+  cursor: pointer; /* Pointer cursor on hover */
+  display: flex; /* Flexbox for icon and text alignment */
+  align-items: center; /* Center items vertically */
+  margin-bottom: 20px; /* Space below the button */
+}
+
+.back-button:hover {
+  background-color: #0056b3; /* Darker shade on hover */
+}
+
+.back-button svg {
+  margin-right: 5px; /* Space between icon and text */
+}
+/* Add these styles to your existing MasterDashboard.css */
+
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.products-controls {
+  position: relative;
+}
+
+.filter-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-top: 50px;
+  gap: 8px;
+}
+
+.filter-button:hover {
+  background-color: #45a049;
+}
+
+.filters-panel {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  width: 250px;
+}
+
+.filter-group {
+  margin-bottom: 15px;
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.location-select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.reset-filters {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.reset-filters:hover {
+  background-color: #d32f2f;
+}
+
+.no-products {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-size: 18px;
+}.video-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.video-modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 800px;
+  position: relative;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.video-player-container {
+  position: relative;
+  padding-top: 56.25%; /* 16:9 aspect ratio */
+}
+
+.video-player-container > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.video-button {
+  background-color: #3498db;
+  color: rgb(255, 255, 255);
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+}
+
