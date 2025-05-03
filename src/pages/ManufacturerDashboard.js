@@ -35,6 +35,10 @@ const ManufacturerDashboard = () => {
   const [filterLocation, setFilterLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
+  // Add these to your existing state declarations
+const [cartItems, setCartItems] = useState([]);
+const [orderTotal, setOrderTotal] = useState(0);
+const [currentUserId, setCurrentUserId] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [jsonData, setJsonData] = useState(null);
@@ -394,106 +398,100 @@ const testProductUpdate = async (productId, quantity) => {
 
 // Usage example:
 // testProductUpdate('6811b51f1a9ee5aaacf59ede', -2)
+const placeOrder = async (orderData) => {
+  try {
+    // 1. First verify stock for all items
+    const stockChecks = await Promise.all(
+      orderData.items.map(item => 
+        axios.get(`https://newmedizon.onrender.com/api/products/${item.product_id}`, {
+          headers: { Authorization: `Bearer ${getToken()}` }
+        })
+      )
+    );
 
-  const placeOrder = async (productId, quantity) => {
-    try {
-      setIsLoading(true);
-      
-      // 1. Verify stock first
-      const productResponse = await axios.get(
-        `https://newmedizon.onrender.com/api/products/${productId}`,
-        { headers: { Authorization: `Bearer ${getToken()}` } }
-      );
-      
-      if (productResponse.data.stock < quantity) {
-        alert(`Only ${productResponse.data.stock} items available`);
-        return;
-      }
-  
-      // Show pending update in UI immediately
-      setUpdatingStocks(prev => ({
-        ...prev,
-        [productId]: productResponse.data.stock - quantity
-      }));
-  
-      // 2. Update stock in MongoDB
-      const stockUpdate = await axios.put(
-        `https://newmedizon.onrender.com/api/products/update-stock/${productId}`,
-        { quantity: -quantity },
-        { 
-          headers: { 
-            Authorization: `Bearer ${getToken()}`,
-            'Content-Type': 'application/json'
-          } 
-        }
-      );
-  
-      if (!stockUpdate.data.success) {
-        throw new Error(stockUpdate.data.message);
-      }
-  
-      // 3. Create order in Supabase
-      const { data: order, error } = await supabase
-        .from('product_order')
-        .insert([{
-          product_id: productId,
-          quantity,
-          status: 'confirmed',
-          stock_updated: true,
-          mongo_stock: stockUpdate.data.newStock
-        }])
-        .select();
-  
-      if (error) throw error;
-  
-      // 4. Update local state
-      setProducts(prevProducts => 
-        prevProducts.map(product => 
-          product._id === productId 
-            ? { ...product, stock: stockUpdate.data.newStock }
-            : product
+    // 2. Check if all items have sufficient stock
+    const allInStock = orderData.items.every((item, index) => {
+      return stockChecks[index].data.stock >= item.quantity;
+    });
+
+    if (!allInStock) {
+      throw new Error("Insufficient stock for one or more items");
+    }
+
+    // 3. Reduce stock for each item
+    await Promise.all(
+      orderData.items.map(item =>
+        axios.put(
+          `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
+          { quantity: -item.quantity },
+          { headers: { Authorization: `Bearer ${getToken()}` } }
+        )
+      )
+    );
+
+    // 4. Create the order in Supabase
+    const { data: order, error } = await supabase
+      .from('product_order')
+      .insert([{
+        ...orderData,
+        status: 'completed', // Mark as completed since stock is updated
+        stock_updated: true
+      }])
+      .select();
+
+    if (error) throw error;
+
+    return order;
+
+  } catch (error) {
+    console.error("Order placement failed:", error);
+    
+    // Revert stock updates if order creation failed
+    if (orderData.items) {
+      await Promise.all(
+        orderData.items.map(item =>
+          axios.put(
+            `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
+            { quantity: item.quantity }, // Add back the quantity
+            { headers: { Authorization: `Bearer ${getToken()}` } }
+          ).catch(e => console.error("Stock revert failed:", e))
         )
       );
-  
-      // 5. Force refresh product data
-      await fetchProducts();
-      
-      // Clear pending update
-      setUpdatingStocks(prev => {
-        const newState = {...prev};
-        delete newState[productId];
-        return newState;
-      });
-  
-      alert('Order placed successfully! Stock updated.');
-    } catch (error) {
-      console.error('Order placement failed:', error);
-      
-      // Revert pending update on error
-      setUpdatingStocks(prev => {
-        const newState = {...prev};
-        delete newState[productId];
-        return newState;
-      });
-  
-      // Revert stock if Supabase order failed
-      if (error.config?.url.includes('supabase')) {
-        try {
-          await axios.put(
-            `https://newmedizon.onrender.com/api/products/update-stock/${productId}`,
-            { quantity: quantity },
-            { headers: { Authorization: `Bearer ${getToken()}` } }
-          );
-        } catch (revertError) {
-          console.error('Failed to revert stock:', revertError);
-        }
-      }
-      
-      alert(error.response?.data?.message || error.message || 'Failed to place order');
-    } finally {
-      setIsLoading(false);
     }
-  };
+    
+    throw error;
+  }
+};
+const handlePlaceOrder = async (items, totalAmount, userId) => {
+  try {
+    setIsLoading(true);
+    
+    const orderData = {
+      items: items, // Use the passed items
+      total_amount: totalAmount, // Use the passed total
+      customer_id: userId, // Use the passed userId
+      // other required order fields...
+      status: 'pending',
+      payment_method: 'cash', // or get from state
+      address: {}, // get from state or props
+      contact_number: '', // get from state or props
+      email: email // from your existing state
+    };
+
+    const order = await placeOrder(orderData);
+    
+    // Refresh data
+    fetchProducts();
+    fetchOrders();
+    
+    alert("Order placed successfully! Stock updated automatically.");
+    
+  } catch (error) {
+    alert(`Order failed: ${error.message}`);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleOrderStatusChange = async (orderId, newStatus) => {
     try {
@@ -562,91 +560,127 @@ const testProductUpdate = async (productId, quantity) => {
   const syncStockLevels = async () => {
     try {
       setIsLoading(true);
-  
-      // 1. Get all products from MongoDB
-      const mongoResponse = await axios.get(
-        "https://newmedizon.onrender.com/api/products/manufacturer",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-          params: { t: Date.now() } // Cache buster
-        }
-      );
-  
-      const mongoProducts = mongoResponse?.data?.products || [];
-      if (!Array.isArray(mongoProducts)) {
-        throw new Error("Invalid products data from server");
+      console.log("Starting stock synchronization...");
+      
+      // 1. Get pending orders
+      const { data: pendingOrders, error: orderError } = await supabase
+        .from('product_order')
+        .select('*')
+        .eq('status', 'pending');
+      
+      if (orderError) {
+        console.error("Supabase order fetch error:", orderError);
+        throw orderError;
       }
   
-      // 2. Get all orders from Supabase
-      const { data: supabaseOrders, error: supabaseError } = await supabase
-        .from('product_order')
-        .select('*');
+      if (!pendingOrders?.length) {
+        console.log("No pending orders found");
+        alert("No pending orders to process");
+        return;
+      }
   
-      if (supabaseError) throw supabaseError;
+      console.log(`Found ${pendingOrders.length} pending orders`);
   
-      // 3. Calculate stock adjustments
-      const stockAdjustments = mongoProducts.map(product => {
-        const productIdStr = product._id.toString();
+      // 2. Process each order
+      for (const order of pendingOrders) {
+        try {
+          console.log(`Processing order ${order.id}`);
+          
+          if (!order.items?.length) {
+            console.warn(`Order ${order.id} has no items, skipping`);
+            continue;
+          }
   
-        const productOrders = supabaseOrders.filter(order =>
-          order?.items?.some(item => item.product_id === productIdStr)
-        );
+          // 3. Verify stock for all items
+          const stockPromises = order.items.map(item => 
+            axios.get(`https://newmedizon.onrender.com/api/products/${item.product_id}`, {
+              headers: { Authorization: `Bearer ${getToken()}` }
+            }).catch(err => {
+              console.error(`Stock check failed for product ${item.product_id}:`, err);
+              throw err;
+            })
+          );
   
-        const totalOrdered = productOrders.reduce((sum, order) => {
-          const item = order.items.find(i => i.product_id === productIdStr);
-          const qty = parseInt(item?.quantity);
-          return sum + (isNaN(qty) ? 0 : qty);
-        }, 0);
+          const stockResponses = await Promise.all(stockPromises);
+          
+          // 4. Check stock levels
+          const stockIssues = order.items.filter((item, index) => {
+            const product = stockResponses[index]?.data;
+            if (!product) {
+              console.error(`Product ${item.product_id} not found`);
+              return true;
+            }
+            return product.stock < item.quantity;
+          });
   
-        return {
-          productId: productIdStr,
-          currentStock: parseInt(product.stock) || 0,
-          totalOrdered,
-          adjustment: -totalOrdered
-        };
-      });
+          if (stockIssues.length > 0) {
+            console.warn(`Order ${order.id} has stock issues:`, stockIssues);
+            await supabase
+              .from('product_order')
+              .update({ status: 'out_of_stock' })
+              .eq('id', order.id);
+            continue;
+          }
   
-      // 4. Process adjustments
-      for (const adjustment of stockAdjustments) {
-        if (adjustment.totalOrdered > 0) {
-          try {
-            console.log(`Updating stock for ${adjustment.productId} by ${adjustment.adjustment}`);
-  
-            const response = await axios.put(
-              `https://newmedizon.onrender.com/api/products/update-stock/${adjustment.productId}`,
-              { quantity: adjustment.adjustment },
-              {
-                headers: {
+          // 5. Update stock for each item
+          const updatePromises = order.items.map(item =>
+            axios.put(
+              `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
+              { quantity: -item.quantity },
+              { 
+                headers: { 
                   Authorization: `Bearer ${getToken()}`,
                   'Content-Type': 'application/json'
-                }
+                } 
               }
-            );
+            ).catch(err => {
+              console.error(`Stock update failed for product ${item.product_id}:`, err);
+              throw err;
+            })
+          );
   
-            if (!response.data.success) {
-              console.error('Stock update failed:', response.data.message);
-              continue;
-            }
+          await Promise.all(updatePromises);
+          console.log(`Stock updated for order ${order.id}`);
   
-            console.log(`Stock updated successfully for ${adjustment.productId}`);
-          } catch (updateError) {
-            console.error(`Failed to adjust stock for ${adjustment.productId}:`, updateError.response?.data || updateError.message);
-          }
+          // 6. Mark order as processed
+          const { error: updateError } = await supabase
+            .from('product_order')
+            .update({ status: 'processed' })
+            .eq('id', order.id);
+  
+          if (updateError) throw updateError;
+          console.log(`Order ${order.id} marked as processed`);
+  
+        } catch (orderError) {
+          console.error(`Failed to process order ${order.id}:`, {
+            error: orderError,
+            response: orderError.response?.data,
+            status: orderError.response?.status
+          });
+          
+          // Mark order as failed
+          await supabase
+            .from('product_order')
+            .update({ status: 'sync_failed' })
+            .eq('id', order.id);
         }
       }
   
-      // 5. Refresh frontend product list
-      await fetchProducts();
-      alert('Stock synchronization completed!');
-    } catch (error) {
-      console.error('Sync failed:', error);
-      alert(`Sync failed: ${error.response?.data?.message || error.message}`);
+      alert("Stock synchronization completed!");
+      fetchProducts();
+      if (activePage === 'orders') fetchOrders();
+  
+    } catch (mainError) {
+      console.error("Sync failed completely:", {
+        error: mainError,
+        response: mainError.response?.data,
+        status: mainError.response?.status
+      });
+      alert(`Sync failed: ${mainError.message}`);
     } finally {
       setIsLoading(false);
     }
   };
-  
-  
   const openModal = (product = null) => {
     if (product) {
       setEditProduct(product);
@@ -1135,7 +1169,7 @@ const testProductUpdate = async (productId, quantity) => {
                       value={formValues.price}
                       onChange={handleInputChange}
                       placeholder="Product Price"
-                      required
+                      
                       min="0"
                       step="0.01"
                     />
