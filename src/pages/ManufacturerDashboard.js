@@ -276,7 +276,7 @@ const [currentUserId, setCurrentUserId] = useState("");
 
   const saveProduct = async (e) => {
     e.preventDefault();
-    if (!formValues.name || !formValues.price || !formValues.stock || 
+    if (!formValues.name  || !formValues.stock || 
         !formValues.category || !formValues.location || !formValues.company) {
       alert("Please fill all required fields");
       return;
@@ -1162,7 +1162,7 @@ const handlePlaceOrder = async (items, totalAmount, userId) => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Price*</label>
+                    <label>Price</label>
                     <input
                       type="number"
                       name="price"
@@ -1170,8 +1170,7 @@ const handlePlaceOrder = async (items, totalAmount, userId) => {
                       onChange={handleInputChange}
                       placeholder="Product Price"
                       
-                      min="0"
-                      step="0.01"
+                    
                     />
                   </div>
                   <div className="form-group">
