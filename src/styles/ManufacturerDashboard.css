@@ -331,6 +331,7 @@ margin-bottom: 150px;
 .edit-btn {
   background-color: #f39c12;
   color: white;
+
 }
 
 .edit-btn:hover {
@@ -340,6 +341,7 @@ margin-bottom: 150px;
 .delete-btn {
   background-color: #e74c3c;
   color: white;
+
 }
 
 .delete-btn:hover {
@@ -752,50 +754,54 @@ margin-bottom: 150px;
   gap: 5px;
 }
 
-.complete-btn {
-  background-color: #2ecc71;
+.processing-btn {
+  background-color: #2196F3;
   color: white;
   border: none;
   padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 3px;
+  margin-right: 5px;
 }
 
-.complete-btn:hover {
-  background-color: #27ae60;
+.shipped-btn {
+  background-color: #673AB7;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
 }
 
-.complete-btn:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
+.out-for-delivery-btn {
+  background-color: #009688;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.delivered-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
 }
 
 .cancel-btn {
-  background-color: #e74c3c;
+  background-color: #f44336;
   color: white;
   border: none;
   padding: 5px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 3px;
 }
-
-.cancel-btn:hover {
-  background-color: #c0392b;
-}
-
-.cancel-btn:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
-}
-
 /* Settings Container */
 .settings-container {
   background-color: white;
@@ -856,6 +862,7 @@ margin-bottom: 150px;
   .content {
     margin-left: 70px;
     width: calc(100% - 70px);
+  
   }
   
   .content.collapsed {
@@ -932,7 +939,7 @@ margin-bottom: 150px;
     border-radius: 0;
   }
 }
-button.logout-btn-manufacture {
+.logout-btn-manuf {
   background: #f41a02;
   color: #fff;
   border: none;
@@ -949,4 +956,58 @@ button.logout-btn-manufacture {
 margin-bottom: 20px;
 border-radius: 20px;
 height: 40px;
+}
+
+.download-btn {
+  background-color: #b85804;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.download-btn:hover {
+  background-color: #8e44ad;
+}
+
+/* Orders header */
+.orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Download all button */
+.download-all-btn {
+  background-color: #4a6baf;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.download-all-btn:hover {
+  background-color: #3a5a9f;
+}
+
+.download-all-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.download-all-btn svg {
+  font-size: 16px;
 }
