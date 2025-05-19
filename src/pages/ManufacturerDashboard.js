@@ -8,8 +8,10 @@ import {
   FaBars, FaChartPie, FaBox, FaSignOutAlt, FaTruck,
   FaCogs, FaClipboardList, FaEdit, FaTrash, FaPlus,
   FaVideo, FaSearch, FaFilter, FaTimes, FaCheck, FaTimesCircle,
-  FaInfoCircle, FaSync, FaFilePdf, FaFileArchive
+  FaInfoCircle, FaSync, FaFilePdf, FaFileArchive, FaReply // <-- Add this
 } from "react-icons/fa";
+import { FaExchangeAlt } from 'react-icons/fa';
+
 import logo from "../images/logo.jpg";
 import "../styles/ManufacturerDashboard.css";
 import { jsPDF } from "jspdf";
@@ -43,6 +45,11 @@ const ManufacturerDashboard = () => {
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [jsonData, setJsonData] = useState(null);
   const [updatingStocks, setUpdatingStocks] = useState({});
+  const [returns, setReturns] = useState([]);
+  const [selectedReturn, setSelectedReturn] = useState(null);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnAction, setReturnAction] = useState('');
+  const [returnNotes, setReturnNotes] = useState('');
 
   const [formValues, setFormValues] = useState({
     name: "",
@@ -57,6 +64,7 @@ const ManufacturerDashboard = () => {
     imageUrl: "",
     imageFile: null,
     videoFile: null,
+    returnPolicy: ""
   });
 
   const [dashboardData, setDashboardData] = useState({
@@ -65,15 +73,15 @@ const ManufacturerDashboard = () => {
     recentOrders: [],
   });
 
-const orderStatuses = ['pending', 'processing', 'shipped', 'out for delivery', 'delivered', 'cancelled'];
-const orderStatusColors = {
-  pending: 'orange',
-  processing: 'purple',
-  shipped: 'blue',
-  'out for delivery': 'teal',
-  delivered: 'green',
-  cancelled: 'red'
-};
+  const orderStatuses = ['pending', 'processing', 'shipped', 'out for delivery', 'delivered', 'cancelled'];
+  const orderStatusColors = {
+    pending: 'orange',
+    processing: 'purple',
+    shipped: 'blue',
+    'out for delivery': 'teal',
+    delivered: 'green',
+    cancelled: 'red'
+  };
 
 
   const categories = [
@@ -117,6 +125,31 @@ const orderStatusColors = {
     "Jabalpur",
   ];
 
+
+  // Add this new return status badge component
+  const renderReturnStatusBadge = (status) => {
+    const statusColors = {
+      requested: 'orange',
+      processing: 'blue',
+      approved: 'teal',
+      rejected: 'red',
+      refunded: 'green',
+      completed: 'purple'
+    };
+
+    const color = statusColors[status] || 'gray';
+
+    return (
+      <span
+        className="status-badge"
+        style={{ backgroundColor: color }}
+      >
+        {status.toUpperCase()}
+      </span>
+    );
+  };
+
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -140,6 +173,8 @@ const orderStatusColors = {
       fetchOrders();
     } else if (activePage === "dashboard") {
       fetchDashboardData();
+    } else if (activePage === "returns") {
+      fetchReturns();
     }
   }, [activePage]);
 
@@ -154,6 +189,25 @@ const orderStatusColors = {
       navigate("/login");
     }
     return token;
+  };
+
+  const fetchReturns = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('order_returns')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setReturns(data || []);
+    } catch (error) {
+      console.error("Error fetching returns:", error);
+      setReturns([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const fetchProducts = async () => {
@@ -234,6 +288,92 @@ const orderStatusColors = {
     }
   };
 
+
+  // Function to handle return status updates
+  const handleReturnStatusUpdate = async (returnId, newStatus) => {
+    try {
+      setIsLoading(true);
+
+      const updates = {
+        status: newStatus,
+        processed_at: new Date().toISOString()
+      };
+
+      if (newStatus === 'refunded') {
+        updates.refund_amount = selectedReturn?.refund_amount || 0;
+      }
+
+      const { error } = await supabase
+        .from('order_returns')
+        .update(updates)
+        .eq('id', returnId);
+
+      if (error) throw error;
+
+      // Refresh returns data
+      await fetchReturns();
+
+      alert(`Return status updated to ${newStatus}`);
+      setShowReturnModal(false);
+    } catch (error) {
+      console.error('Error updating return status:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to generate return PDF
+  const generateReturnPDF = (returnItem) => {
+    const doc = new jsPDF();
+
+    // Add logo or title
+    doc.setFontSize(18);
+    doc.setTextColor(40, 53, 147);
+    doc.text('NewMedizon - Return Invoice', 105, 20, { align: 'center' });
+
+    // Return details
+    doc.setFontSize(12);
+    doc.text(`Return ID: ${returnItem.id}`, 14, 30);
+    doc.text(`Order ID: ${returnItem.order_id}`, 14, 40);
+    doc.text(`Customer Email: ${returnItem.user_email}`, 14, 50);
+    doc.text(`Status: ${returnItem.status.toUpperCase()}`, 14, 60);
+    doc.text(`Request Date: ${new Date(returnItem.created_at).toLocaleDateString()}`, 14, 70);
+
+    if (returnItem.processed_at) {
+      doc.text(`Processed Date: ${new Date(returnItem.processed_at).toLocaleDateString()}`, 14, 80);
+    }
+
+    if (returnItem.refund_amount) {
+      doc.text(`Refund Amount: ₹${returnItem.refund_amount}`, 14, 90);
+    }
+
+    // Reason section
+    doc.setFontSize(14);
+    doc.text('Return Reason:', 14, 100);
+    doc.setFontSize(12);
+    doc.text(returnItem.return_reason, 20, 110);
+
+    if (returnItem.detailed_reason) {
+      doc.text('Detailed Reason:', 14, 120);
+      const splitText = doc.splitTextToSize(returnItem.detailed_reason, 180);
+      doc.text(splitText, 20, 130);
+    }
+
+    // Footer
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(
+      'Thank you for your business!',
+      14,
+      doc.internal.pageSize.height - 20
+    );
+
+    // Save the PDF
+    doc.save(`NewMedizon_Return_${returnItem.id}.pdf`);
+  };
+
+
   const filterProducts = () => {
     let result = [...products];
 
@@ -302,6 +442,7 @@ const orderStatusColors = {
     formData.append("location", formValues.location);
     formData.append("company", formValues.company);
     formData.append("size", formValues.size);
+    formData.append("returnPolicy", formValues.returnPolicy);
     if (formValues.imageFile) {
       formData.append("imageFile", formValues.imageFile);
     }
@@ -501,75 +642,75 @@ const orderStatusColors = {
     }
   };
 
-const handleOrderStatusChange = async (orderId, newStatus) => {
-  try {
-    setIsLoading(true);
+  const handleOrderStatusChange = async (orderId, newStatus) => {
+    try {
+      setIsLoading(true);
 
-    // Get current order with items
-    const { data: currentOrder, error: fetchError } = await supabase
-      .from('product_order')
-      .select('*')
-      .eq('id', orderId)
-      .single();
+      // Get current order with items
+      const { data: currentOrder, error: fetchError } = await supabase
+        .from('product_order')
+        .select('*')
+        .eq('id', orderId)
+        .single();
 
-    if (fetchError) throw fetchError;
+      if (fetchError) throw fetchError;
 
-    // Handle stock updates based on status change
-    if (newStatus === 'cancelled') {
-      // Restore stock for cancelled orders
-      for (const item of currentOrder.items) {
-        try {
-          await axios.put(
-            `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
-            { quantity: item.quantity },
-            { headers: { Authorization: `Bearer ${getToken()}` } }
-          );
-        } catch (error) {
-          console.error(`Failed to restore stock for product ${item.product_id}:`, error);
-        }
-      }
-    } 
-    else if (newStatus === 'processing' && currentOrder.status === 'pending') {
-      // Reduce stock when order moves from pending to processing
-      for (const item of currentOrder.items) {
-        try {
-          const response = await axios.put(
-            `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
-            { quantity: -item.quantity },
-            { headers: { Authorization: `Bearer ${getToken()}` } }
-          );
-          
-          if (!response.data.success) {
-            throw new Error(response.data.message || "Stock update failed");
+      // Handle stock updates based on status change
+      if (newStatus === 'cancelled') {
+        // Restore stock for cancelled orders
+        for (const item of currentOrder.items) {
+          try {
+            await axios.put(
+              `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
+              { quantity: item.quantity },
+              { headers: { Authorization: `Bearer ${getToken()}` } }
+            );
+          } catch (error) {
+            console.error(`Failed to restore stock for product ${item.product_id}:`, error);
           }
-        } catch (error) {
-          console.error(`Failed to reduce stock for product ${item.product_id}:`, error);
-          throw new Error(`Failed to process order: ${error.message}`);
         }
       }
+      else if (newStatus === 'processing' && currentOrder.status === 'pending') {
+        // Reduce stock when order moves from pending to processing
+        for (const item of currentOrder.items) {
+          try {
+            const response = await axios.put(
+              `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
+              { quantity: -item.quantity },
+              { headers: { Authorization: `Bearer ${getToken()}` } }
+            );
+
+            if (!response.data.success) {
+              throw new Error(response.data.message || "Stock update failed");
+            }
+          } catch (error) {
+            console.error(`Failed to reduce stock for product ${item.product_id}:`, error);
+            throw new Error(`Failed to process order: ${error.message}`);
+          }
+        }
+      }
+
+      // Update order status in Supabase
+      const { error } = await supabase
+        .from('product_order')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Refresh data
+      fetchProducts();
+      fetchOrders();
+      if (activePage === 'dashboard') fetchDashboardData();
+
+      alert(`Order status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Status change failed:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
-
-    // Update order status in Supabase
-    const { error } = await supabase
-      .from('product_order')
-      .update({ status: newStatus })
-      .eq('id', orderId);
-
-    if (error) throw error;
-
-    // Refresh data
-    fetchProducts();
-    fetchOrders();
-    if (activePage === 'dashboard') fetchDashboardData();
-
-    alert(`Order status updated to ${newStatus}`);
-  } catch (error) {
-    console.error('Status change failed:', error);
-    alert(`Error: ${error.message}`);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const updateStock = async (productId, quantity) => {
     try {
@@ -734,58 +875,120 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
 
   const generateOrderPDF = (order) => {
     const doc = new jsPDF();
-    
+
     // Add logo or title
     doc.setFontSize(18);
     doc.setTextColor(40, 53, 147);
     doc.text('NewMedizon - Order Invoice', 105, 20, { align: 'center' });
-    
-    // Order details
+
+    // Order details section
     doc.setFontSize(12);
+
+    // Left column - Order info
     doc.text(`Order ID: ${order.id}`, 14, 30);
-    doc.text(`Date: ${new Date(order.created_at).toLocaleDateString()}`, 14, 40);
-    doc.text(`Customer: ${order.full_name || 'N/A'}`, 14, 50);
-    doc.text(`Email: ${order.email || 'N/A'}`, 14, 60);
-    doc.text(`Status: ${order.status.toUpperCase()}`, 14, 70);
-    doc.text(`Payment Method: ${order.payment_method || 'N/A'}`, 14, 80);
-    doc.text(`Total Amount: ₹${order.total_amount}`, 14, 90);
-    
+    doc.text(`Date: ${new Date(order.created_at).toLocaleDateString()}`, 14, 35);
+    doc.text(`Status: ${order.status.toUpperCase()}`, 14, 40);
+
+    // Right column - Customer info
+    doc.text(`Customer: ${order.full_name || 'N/A'}`, 105, 30);
+    doc.text(`Email: ${order.email || 'N/A'}`, 105, 35);
+    doc.text(`Contact: ${order.contact_number || 'N/A'}`, 105, 40);
+
+    // Payment info
+    doc.text(`Payment Method: ${order.payment_method || 'N/A'}`, 14, 50);
+    doc.text(`Total Amount: ₹${order.total_amount.toFixed(2)}`, 105, 50);
+
+    // Address section
+    if (order.address) {
+      doc.text('Shipping Address:', 14, 60);
+      const addressLines = [
+        order.address.street,
+        `${order.address.city}, ${order.address.state}`,
+        order.address.postal_code,
+        order.address.country
+      ].filter(Boolean);
+
+      addressLines.forEach((line, index) => {
+        doc.text(line, 20, 65 + (index * 5));
+      });
+    }
+
     // Items table
     if (order.items && order.items.length > 0) {
-      const itemsData = order.items.map(item => [
-        item.name || 'N/A',
-        `₹${item.price || 0}`,
-        item.quantity || 0,
-        `₹${(item.price * item.quantity) || 0}`
-      ]);
-      
+      // Table headers
+      const headers = [
+        { header: 'Product', dataKey: 'name' },
+        { header: 'Unit Price', dataKey: 'price' },
+        { header: 'Quantity', dataKey: 'quantity' },
+        { header: 'Total', dataKey: 'total' }
+      ];
+
+      // Prepare table data
+      const tableData = order.items.map(item => ({
+        name: item.name || 'N/A',
+        price: `₹${item.price ? item.price.toFixed(2) : '0.00'}`,
+        quantity: item.quantity || 0,
+        total: `₹${(item.price * item.quantity).toFixed(2)}`
+      }));
+
+      // Add total row
+      tableData.push({
+        name: 'TOTAL',
+        price: '',
+        quantity: '',
+        total: `₹${order.total_amount.toFixed(2)}`
+      });
+
+      // Generate the table
       autoTable(doc, {
-        startY: 100,
-        head: [['Product', 'Unit Price', 'Quantity', 'Total']],
-        body: itemsData,
+        startY: 85,
+        head: [headers.map(h => h.header)],
+        body: tableData.map(row => headers.map(h => row[h.dataKey])),
         theme: 'grid',
         headStyles: {
           fillColor: [40, 53, 147],
           textColor: 255,
           fontStyle: 'bold'
         },
-        margin: { top: 10 }
+        columnStyles: {
+          0: { cellWidth: 'auto' }, // Product name
+          1: { cellWidth: 30 },     // Unit Price
+          2: { cellWidth: 25 },     // Quantity
+          3: { cellWidth: 30 }      // Total
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 3,
+          overflow: 'linebreak'
+        },
+        didDrawPage: function (data) {
+          // Style the total row
+          if (data.pageNumber === data.pageCount) {
+            const lastRow = data.table.body[data.table.body.length - 1];
+            doc.setFontStyle('bold');
+            doc.setTextColor(40, 53, 147);
+            lastRow.cells.forEach(cell => {
+              cell.styles.fontStyle = 'bold';
+              cell.styles.textColor = [40, 53, 147];
+            });
+          }
+        }
       });
     }
-    
+
     // Footer
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(
-      'Thank you for your order!',
-      14,
-      doc.lastAutoTable.finalY + 20
+      'Thank you for your business! For any queries, please contact support@newmedizon.com',
+      105,
+      doc.lastAutoTable.finalY + 15,
+      { align: 'center' }
     );
-    
+
     // Save the PDF
     doc.save(`NewMedizon_Order_${order.id}.pdf`);
   };
-
   const generateAllOrdersPDF = () => {
     if (orders.length === 0) {
       alert("No orders available to download");
@@ -793,35 +996,35 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
     }
 
     const doc = new jsPDF();
-    
+
     // Add title
     doc.setFontSize(18);
     doc.setTextColor(40, 53, 147);
     doc.text('NewMedizon - All Orders Report', 105, 20, { align: 'center' });
-    
+
     // Add report details
     doc.setFontSize(12);
     doc.text(`Report Date: ${new Date().toLocaleDateString()}`, 14, 30);
     doc.text(`Total Orders: ${orders.length}`, 14, 40);
-    
+
     // Group orders by status for summary
     const statusCounts = orders.reduce((acc, order) => {
       acc[order.status] = (acc[order.status] || 0) + 1;
       return acc;
     }, {});
-    
+
     // Add status summary
     let yPosition = 50;
     doc.text('Order Status Summary:', 14, yPosition);
     yPosition += 10;
-    
+
     Object.entries(statusCounts).forEach(([status, count]) => {
       doc.text(`${status.toUpperCase()}: ${count}`, 20, yPosition);
       yPosition += 10;
     });
-    
-    yPosition += 10;
-    
+
+    yPosition += 15;
+
     // Add each order as a table
     orders.forEach((order, index) => {
       // Add page break if needed (except for first order)
@@ -829,13 +1032,13 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
         doc.addPage();
         yPosition = 20;
       }
-      
+
       // Order header
       doc.setFontSize(14);
       doc.setTextColor(40, 53, 147);
       doc.text(`Order #${order.id}`, 14, yPosition);
       yPosition += 10;
-      
+
       // Order details
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
@@ -843,34 +1046,69 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
       doc.text(`Status: ${order.status.toUpperCase()}`, 100, yPosition);
       yPosition += 5;
       doc.text(`Customer: ${order.full_name || 'N/A'}`, 14, yPosition);
-      doc.text(`Amount: ₹${order.total_amount}`, 100, yPosition);
+      doc.text(`Amount: ₹${order.total_amount.toFixed(2)}`, 100, yPosition);
       yPosition += 10;
-      
+
       // Items table
       if (order.items && order.items.length > 0) {
-        const itemsData = order.items.map(item => [
-          item.name || 'N/A',
-          `₹${item.price || 0}`,
-          item.quantity || 0,
-          `₹${(item.price * item.quantity) || 0}`
-        ]);
-        
+        const headers = [
+          { header: 'Product', dataKey: 'name' },
+          { header: 'Unit Price', dataKey: 'price' },
+          { header: 'Quantity', dataKey: 'quantity' },
+          { header: 'Total', dataKey: 'total' }
+        ];
+
+        const tableData = order.items.map(item => ({
+          name: item.name || 'N/A',
+          price: `₹${item.price ? item.price.toFixed(2) : '0.00'}`,
+          quantity: item.quantity || 0,
+          total: `₹${(item.price * item.quantity).toFixed(2)}`
+        }));
+
+        // Add total row
+        tableData.push({
+          name: 'TOTAL',
+          price: '',
+          quantity: '',
+          total: `₹${order.total_amount.toFixed(2)}`
+        });
+
         autoTable(doc, {
           startY: yPosition,
-          head: [['Product', 'Unit Price', 'Quantity', 'Total']],
-          body: itemsData,
+          head: [headers.map(h => h.header)],
+          body: tableData.map(row => headers.map(h => row[h.dataKey])),
           theme: 'grid',
           headStyles: {
             fillColor: [40, 53, 147],
             textColor: 255,
             fontStyle: 'bold'
           },
-          margin: { top: 5 }
+          columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 30 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 30 }
+          },
+          styles: {
+            fontSize: 9,
+            cellPadding: 2
+          },
+          didDrawPage: function (data) {
+            if (data.pageNumber === data.pageCount) {
+              const lastRow = data.table.body[data.table.body.length - 1];
+              doc.setFontStyle('bold');
+              doc.setTextColor(40, 53, 147);
+              lastRow.cells.forEach(cell => {
+                cell.styles.fontStyle = 'bold';
+                cell.styles.textColor = [40, 53, 147];
+              });
+            }
+          }
         });
-        
+
         yPosition = doc.lastAutoTable.finalY + 10;
       }
-      
+
       // Add separator if not last order
       if (index < orders.length - 1) {
         doc.setDrawColor(200, 200, 200);
@@ -878,13 +1116,11 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
         yPosition += 15;
       }
     });
-    
+
     // Save the PDF
     doc.save(`NewMedizon_All_Orders_Report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
-
-  
   const openModal = (product = null) => {
     if (product) {
       setEditProduct(product);
@@ -901,6 +1137,7 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
         imageUrl: product.imageUrl || "",
         imageFile: null,
         videoFile: null,
+        returnPolicy: product.returnPolicy || "",
       });
     } else {
       resetForm();
@@ -927,6 +1164,7 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
       imageUrl: "",
       imageFile: null,
       videoFile: null,
+      returnPolicy: ""
     });
     setEditProduct(null);
   };
@@ -1064,6 +1302,13 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
             <span>Orders</span>
           </li>
           <li
+            className={activePage === "returns" ? "active" : ""}
+            onClick={() => setActivePage("returns")}
+          >
+            <FaReply />
+            <span>Returns</span>
+          </li>
+          <li
             className={activePage === "settings" ? "active" : ""}
             onClick={() => setActivePage("settings")}
           >
@@ -1149,7 +1394,7 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
                 <button className="add-product-btn" onClick={() => openModal()}>
                   <FaPlus /> Add Product
                 </button>
-                
+
               </div>
             </div>
 
@@ -1238,6 +1483,7 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
                     </th>
                     <th>Location</th>
                     <th>Size</th>
+                    <th>Return Policy</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -1284,6 +1530,7 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
                         </td>
                         <td>{product.location}</td>
                         <td>{product.size}</td>
+                        <td>{product.returnPolicy === 'yes' ? 'Yes' : 'No'}</td>
                         <td>
                           <button
                             className="action-btn edit-btn"
@@ -1429,6 +1676,18 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
                     </select>
                   </div>
                 </div>
+                <div className="form-group">
+                  <label>Return Policy*</label>
+                  <select
+                    name="returnPolicy"
+                    value={formValues.returnPolicy}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="no">No Return Policy</option>
+                    <option value="yes">Has Return Policy</option>
+                  </select>
+                </div>
 
                 <div className="form-row">
                   <div className="form-group">
@@ -1549,7 +1808,7 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
             <div className="orders-header">
               <h2>Orders</h2>
               <div>
-                <button 
+                <button
                   className="download-all-btn"
                   onClick={generateAllOrdersPDF}
                   disabled={orders.length === 0 || isLoading}
@@ -1620,69 +1879,69 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
                             <FaFilePdf /> PDF
                           </button>
                         </td>
-                     <td className="order-actions">
-  {order.status === 'pending' && (
-    <button
-      className="processing-btn"
-      onClick={(e) => {
-        e.stopPropagation();
-        handleOrderStatusChange(order.id, 'processing');
-      }}
-      disabled={isLoading}
-    >
-      <FaCheck /> Confirm & Process
-    </button>
-  )}
-  {order.status === 'processing' && (
-    <button
-      className="shipped-btn"
-      onClick={(e) => {
-        e.stopPropagation();
-        handleOrderStatusChange(order.id, 'shipped');
-      }}
-      disabled={isLoading}
-    >
-      <FaTruck /> Mark as Shipped
-    </button>
-  )}
-  {order.status === 'shipped' && (
-    <button
-      className="out-for-delivery-btn"
-      onClick={(e) => {
-        e.stopPropagation();
-        handleOrderStatusChange(order.id, 'out for delivery');
-      }}
-      disabled={isLoading}
-    >
-      <FaTruck /> Out for Delivery
-    </button>
-  )}
-  {order.status === 'out for delivery' && (
-    <button
-      className="delivered-btn"
-      onClick={(e) => {
-        e.stopPropagation();
-        handleOrderStatusChange(order.id, 'delivered');
-      }}
-      disabled={isLoading}
-    >
-      <FaCheck /> Mark as Delivered
-    </button>
-  )}
-  {order.status !== 'cancelled' && order.status !== 'delivered' && (
-    <button
-      className="cancel-btn"
-      onClick={(e) => {
-        e.stopPropagation();
-        handleOrderStatusChange(order.id, 'cancelled');
-      }}
-      disabled={isLoading}
-    >
-      <FaTimesCircle /> Cancel
-    </button>
-  )}
-</td>
-</tr>
+                        <td className="order-actions">
+                          {order.status === 'pending' && (
+                            <button
+                              className="processing-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOrderStatusChange(order.id, 'processing');
+                              }}
+                              disabled={isLoading}
+                            >
+                              <FaCheck /> Confirm & Process
+                            </button>
+                          )}
+                          {order.status === 'processing' && (
+                            <button
+                              className="shipped-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOrderStatusChange(order.id, 'shipped');
+                              }}
+                              disabled={isLoading}
+                            >
+                              <FaTruck /> Mark as Shipped
+                            </button>
+                          )}
+                          {order.status === 'shipped' && (
+                            <button
+                              className="out-for-delivery-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOrderStatusChange(order.id, 'out for delivery');
+                              }}
+                              disabled={isLoading}
+                            >
+                              <FaTruck /> Out for Delivery
+                            </button>
+                          )}
+                          {order.status === 'out for delivery' && (
+                            <button
+                              className="delivered-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOrderStatusChange(order.id, 'delivered');
+                              }}
+                              disabled={isLoading}
+                            >
+                              <FaCheck /> Mark as Delivered
+                            </button>
+                          )}
+                          {order.status !== 'cancelled' && order.status !== 'delivered' && (
+                            <button
+                              className="cancel-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOrderStatusChange(order.id, 'cancelled');
+                              }}
+                              disabled={isLoading}
+                            >
+                              <FaTimesCircle /> Cancel
+                            </button>
+                          )}
+                        </td>
+                      </tr>
                     ))
                   ) : (
                     <tr>
@@ -1695,6 +1954,199 @@ const handleOrderStatusChange = async (orderId, newStatus) => {
           </div>
         )}
 
+
+
+        {activePage === "returns" && (
+          <div className="returns-container">
+            <div className="returns-header">
+              <h2>Order Returns</h2>
+            </div>
+
+            <div className="table-responsive">
+              <table className="returns-table">
+                <thead>
+                  <tr>
+                    <th>Return ID</th>
+                    <th>Order ID</th>
+                    <th>Customer Email</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Request Date</th>
+                    <th>Processed Date</th>
+                    <th>Refund Amount</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {returns.length > 0 ? (
+                    returns.map((returnItem) => (
+                      <tr key={returnItem.id}>
+                        <td>{returnItem.id}</td>
+                        <td
+                          className="clickable"
+                          onClick={() => {
+                            setJsonData(returnItem);
+                            setShowJsonModal(true);
+                          }}
+                        >
+                          {returnItem.order_id}
+                          <FaInfoCircle className="info-icon" />
+                        </td>
+                        <td>{returnItem.user_email}</td>
+                        <td>{returnItem.return_reason}</td>
+                        <td>{renderReturnStatusBadge(returnItem.status)}</td>
+                        <td>{new Date(returnItem.created_at).toLocaleDateString()}</td>
+                        <td>
+                          {returnItem.processed_at ?
+                            new Date(returnItem.processed_at).toLocaleDateString() :
+                            'Not processed'}
+                        </td>
+                        <td>
+                          {returnItem.refund_amount ?
+                            `₹${returnItem.refund_amount}` :
+                            'N/A'}
+                        </td>
+                        <td>
+                          <button
+                            className="action-btn view-btn"
+                            onClick={() => {
+                              setSelectedReturn(returnItem);
+                              setShowReturnModal(true);
+                            }}
+                          >
+                            <FaExchangeAlt />
+                            Process
+                          </button>
+                          <button
+                            className="action-btn pdf-btn"
+                            onClick={() => generateReturnPDF(returnItem)}
+                          >
+                            <FaFilePdf /> PDF
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="9" className="no-data">
+                        No return requests found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Return Action Modal */}
+            {showReturnModal && selectedReturn && (
+              <div className="modal-overlay">
+                <div className="modal">
+                  <div className="modal-header">
+                    <h3>Process Return Request</h3>
+                    <button
+                      className="close-modal"
+                      onClick={() => setShowReturnModal(false)}
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <div className="return-details">
+                    <p><strong>Return ID:</strong> {selectedReturn.id}</p>
+                    <p><strong>Order ID:</strong> {selectedReturn.order_id}</p>
+                    <p><strong>Customer Email:</strong> {selectedReturn.user_email}</p>
+                    <p><strong>Reason:</strong> {selectedReturn.return_reason}</p>
+                    <p><strong>Current Status:</strong> {selectedReturn.status}</p>
+
+                    {selectedReturn.detailed_reason && (
+                      <div className="detailed-reason">
+                        <p><strong>Detailed Reason:</strong></p>
+                        <p>{selectedReturn.detailed_reason}</p>
+                      </div>
+                    )}
+
+                    {selectedReturn.images && selectedReturn.images.length > 0 && (
+                      <div className="return-images">
+                        <p><strong>Images:</strong></p>
+                        <div className="image-grid">
+                          {selectedReturn.images.map((img, index) => (
+                            <img
+                              key={index}
+                              src={img}
+                              alt={`Return evidence ${index + 1}`}
+                              className="return-image"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label>Action</label>
+                    <select
+                      value={returnAction}
+                      onChange={(e) => setReturnAction(e.target.value)}
+                      required
+                    >
+                      <option value="">Select action</option>
+                      <option value="Return Approved">Approve Return</option>
+                      <option value="rejected"> Cancel  request</option>
+                      <option value="refunded">Process Refund</option>
+                    </select>
+                  </div>
+
+                  {returnAction === 'refunded' && (
+                    <div className="form-group">
+                      <label>Refund Amount (₹)</label>
+                      <input
+                        type="number"
+                        value={selectedReturn.refund_amount || ''}
+                        onChange={(e) => setSelectedReturn({
+                          ...selectedReturn,
+                          refund_amount: parseFloat(e.target.value) || 0
+                        })}
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label>Notes</label>
+                    <textarea
+                      value={returnNotes}
+                      onChange={(e) => setReturnNotes(e.target.value)}
+                      placeholder="Add any notes about this return..."
+                      rows="3"
+                    />
+                  </div>
+
+                  <div className="modal-actions">
+                    <button
+                      className="btn-primary"
+                      onClick={() => handleReturnStatusUpdate(
+                        selectedReturn.id,
+                        returnAction
+                      )}
+                      disabled={!returnAction || isLoading}
+                    >
+                      {isLoading ? 'Processing...' : 'Submit'}
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setShowReturnModal(false)}
+                      disabled={isLoading}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+        };
         {activePage === "settings" && (
           <div className="settings-container">
             <h2>Account Settings</h2>
