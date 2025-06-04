@@ -1,14 +1,16 @@
-
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from '@supabase/supabase-js';
 import axios from "axios";
+import { jwtDecode } from 'jwt-decode'; // ✅ Correct for named export
+
+
+
 import {
   FaBars, FaChartPie, FaBox, FaSignOutAlt, FaTruck,
   FaCogs, FaClipboardList, FaEdit, FaTrash, FaPlus,
   FaVideo, FaSearch, FaFilter, FaTimes, FaCheck, FaTimesCircle,
-  FaInfoCircle, FaSync, FaFilePdf, FaFileArchive, FaReply // <-- Add this
+  FaInfoCircle, FaFilePdf, FaFileArchive, FaReply, FaStar, FaStarHalfAlt, FaRegStar
 } from "react-icons/fa";
 import { FaExchangeAlt } from 'react-icons/fa';
 
@@ -17,8 +19,8 @@ import "../styles/ManufacturerDashboard.css";
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 
-const SUPABASE_URL = 'https://wxcqhslupuixynbjgncf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4Y3Foc2x1cHVpeHluYmpnbmNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MjYyNjEsImV4cCI6MjA1NzAwMjI2MX0.u6vJb-zV6rFUU3HGpgNgQlmxDZfTgbpDcxTgbmEZeM0';
+const SUPABASE_URL = 'https://ddnmqzlxzwiydiklqach.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkbm1xemx4endpeWRpa2xxYWNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MjYyOTgsImV4cCI6MjA2MzMwMjI5OH0.D0YMTuSU_5mpH5LlphlL25Da3b9H1TBHi9LL1FrOdm4';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const ManufacturerDashboard = () => {
@@ -44,12 +46,13 @@ const ManufacturerDashboard = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [jsonData, setJsonData] = useState(null);
-  const [updatingStocks, setUpdatingStocks] = useState({});
+  const [updatingStocks] = useState({});
   const [returns, setReturns] = useState([]);
   const [selectedReturn, setSelectedReturn] = useState(null);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [returnAction, setReturnAction] = useState('');
   const [returnNotes, setReturnNotes] = useState('');
+
 
   const [formValues, setFormValues] = useState({
     name: "",
@@ -64,7 +67,7 @@ const ManufacturerDashboard = () => {
     imageUrl: "",
     imageFile: null,
     videoFile: null,
-    returnPolicy: ""
+    returnPolicy: "no"
   });
 
   const [dashboardData, setDashboardData] = useState({
@@ -73,16 +76,15 @@ const ManufacturerDashboard = () => {
     recentOrders: [],
   });
 
-  const orderStatuses = ['pending', 'processing', 'shipped', 'out for delivery', 'delivered', 'cancelled'];
-  const orderStatusColors = {
-    pending: 'orange',
-    processing: 'purple',
-    shipped: 'blue',
-    'out for delivery': 'teal',
-    delivered: 'green',
-    cancelled: 'red'
-  };
+  const orderStatuses = ['Order Placed', 'processing', 'out for delivery', 'delivered', 'cancelled'];
 
+  const orderStatusColors = {
+    'Order Placed': 'orange',
+    'processing': 'purple',
+    'out for delivery': 'teal',
+    'delivered': 'green',
+    'cancelled': 'red'
+  };
 
   const categories = [
     "Cardiac Equipment",
@@ -114,7 +116,7 @@ const ManufacturerDashboard = () => {
   const locations = [
     "Nagpur",
     "Amravati",
-    "Mumabai",
+    "Mumbai",
     "Pune",
     "Aurangabad",
     "Nashik",
@@ -126,7 +128,7 @@ const ManufacturerDashboard = () => {
   ];
 
 
-  // Add this new return status badge component
+
   const renderReturnStatusBadge = (status) => {
     const statusColors = {
       requested: 'orange',
@@ -149,6 +151,17 @@ const ManufacturerDashboard = () => {
     );
   };
 
+  const renderStatusBadge = (status) => {
+    const color = orderStatusColors[status] || 'gray';
+    return (
+      <span
+        className="status-badge"
+        style={{ backgroundColor: color }}
+      >
+        {status.toUpperCase()}
+      </span>
+    );
+  };
 
   const navigate = useNavigate();
 
@@ -156,7 +169,7 @@ const ManufacturerDashboard = () => {
     const fetchManufacturerEmail = async () => {
       try {
         const token = getToken();
-        const response = await axios.get("https://newmedizon.onrender.com/api/auth/me", {
+        const response = await axios.get("https://grammerly-backend.onrender.com/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setEmail(response.data.email || "");
@@ -185,11 +198,12 @@ const ManufacturerDashboard = () => {
   const getToken = () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("No token found. Please log in again.");
       navigate("/login");
+      throw new Error("No authentication token found");
     }
     return token;
   };
+
 
   const fetchReturns = async () => {
     setIsLoading(true);
@@ -213,10 +227,11 @@ const ManufacturerDashboard = () => {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get("https://newmedizon.onrender.com/api/products/manufacturer?t=${Date.now()}", {
+      const response = await axios.get(`https://grammerly-backend.onrender.com/api/products/fmanufacturer?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       setProducts(response.data.products || []);
+      console.log(response.data)
     } catch (error) {
       console.error("Error fetching products:", error);
       setProducts([]);
@@ -229,23 +244,45 @@ const ManufacturerDashboard = () => {
     setIsLoading(true);
     try {
       const [productsResponse, { data: allOrders }] = await Promise.all([
-        axios.get("https://newmedizon.onrender.com/api/products/manufacturer?t=${Date.now()}", {
+        axios.get(`https://grammerly-backend.onrender.com/api/products/fmanufacturer?t=${Date.now()}`, {
           headers: { Authorization: `Bearer ${getToken()}` },
         }),
-        supabase.from('product_order').select('*').order('created_at', { ascending: false }).limit(5)
+        supabase
+          .from('product_order')
+          .select('*')
+          .order('created_at', { ascending: false })
       ]);
 
-      const manufacturerProductIds = productsResponse.data.products.map(p => p._id);
-      const relevantOrders = allOrders.filter(order =>
-        order.items && order.items.some(item =>
-          manufacturerProductIds.includes(item.product_id)
-        )
-      );
+      // 🛠️ Check what actual fields exist on your products
+      const products = productsResponse.data.products || [];
+      console.log("Raw Products:", products);
+
+      // ✅ Fix: use the correct key (likely 'id', not '_id')
+const manufacturerProductIds = products.map(p => String(p.id).trim().toLowerCase()).filter(Boolean);      console.log("Manufacturer Product IDs:", manufacturerProductIds);
+const relevantOrders = allOrders.filter(order => {
+  let items = [];
+  if (order.ordered_items_text) {
+    try {
+      const parsed = JSON.parse(order.ordered_items_text);
+      items = Array.isArray(parsed.ordered_items) ? parsed.ordered_items : [];
+    } catch {
+      items = [];
+    }
+  }
+  console.log("Order", order.id, "items", items);
+  if (!Array.isArray(items)) return false;
+  return items.some(item =>
+    manufacturerProductIds.includes(String(item.product_id).trim().toLowerCase())
+  );
+});
+      console.log("Filtered Orders:", relevantOrders);
+
+      const recentRelevantOrders = relevantOrders.slice(0, 5);
 
       setDashboardData({
-        totalProducts: productsResponse.data.products.length,
+        totalProducts: manufacturerProductIds.length,
         totalOrders: relevantOrders.length,
-        recentOrders: relevantOrders,
+        recentOrders: recentRelevantOrders,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -254,85 +291,59 @@ const ManufacturerDashboard = () => {
     }
   };
 
-  const fetchOrders = async () => {
-    setIsLoading(true);
-    try {
-      const productsResponse = await axios.get(
-        "https://newmedizon.onrender.com/api/products/manufacturer?t=${Date.now()}",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        }
-      );
-
-      const manufacturerProductIds = productsResponse.data.products.map(p => p._id);
-
-      const { data, error } = await supabase
-        .from('product_order')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const filteredOrders = data.filter(order =>
-        order.items && order.items.some(item =>
-          manufacturerProductIds.includes(item.product_id)
-        )
-      );
-
-      setOrders(filteredOrders || []);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      setOrders([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
-  // Function to handle return status updates
-  const handleReturnStatusUpdate = async (returnId, newStatus) => {
-    try {
-      setIsLoading(true);
-
-      const updates = {
-        status: newStatus,
-        processed_at: new Date().toISOString()
-      };
-
-      if (newStatus === 'refunded') {
-        updates.refund_amount = selectedReturn?.refund_amount || 0;
+const fetchOrders = async () => {
+  setIsLoading(true);
+  try {
+    const productsResponse = await axios.get(
+      `https://grammerly-backend.onrender.com/api/products/fmanufacturer?t=${Date.now()}`,
+      {
+        headers: { Authorization: `Bearer ${getToken()}` },
       }
+    );
 
-      const { error } = await supabase
-        .from('order_returns')
-        .update(updates)
-        .eq('id', returnId);
+    const manufacturerProductIds = productsResponse.data.products
+      .map(p => (p._id || p.id)?.toString().trim().toLowerCase())
+      .filter(Boolean);
 
-      if (error) throw error;
+    const { data: rawOrders, error } = await supabase
+      .from('product_order')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-      // Refresh returns data
-      await fetchReturns();
+    if (error) throw error;
 
-      alert(`Return status updated to ${newStatus}`);
-      setShowReturnModal(false);
-    } catch (error) {
-      console.error('Error updating return status:', error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const filteredOrders = rawOrders.filter(order => {
+      let items = [];
+      if (order.ordered_items_text) {
+        try {
+          const parsed = JSON.parse(order.ordered_items_text);
+          items = Array.isArray(parsed.ordered_items) ? parsed.ordered_items : [];
+        } catch {
+          items = [];
+        }
+      }
+      if (!Array.isArray(items)) return false;
+      return items.some(item =>
+        manufacturerProductIds.includes(String(item.product_id).trim().toLowerCase())
+      );
+    });
 
-  // Function to generate return PDF
+    setOrders(filteredOrders || []);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    setOrders([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
   const generateReturnPDF = (returnItem) => {
     const doc = new jsPDF();
-
-    // Add logo or title
     doc.setFontSize(18);
     doc.setTextColor(40, 53, 147);
     doc.text('NewMedizon - Return Invoice', 105, 20, { align: 'center' });
 
-    // Return details
     doc.setFontSize(12);
     doc.text(`Return ID: ${returnItem.id}`, 14, 30);
     doc.text(`Order ID: ${returnItem.order_id}`, 14, 40);
@@ -348,7 +359,6 @@ const ManufacturerDashboard = () => {
       doc.text(`Refund Amount: ₹${returnItem.refund_amount}`, 14, 90);
     }
 
-    // Reason section
     doc.setFontSize(14);
     doc.text('Return Reason:', 14, 100);
     doc.setFontSize(12);
@@ -360,7 +370,6 @@ const ManufacturerDashboard = () => {
       doc.text(splitText, 20, 130);
     }
 
-    // Footer
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(
@@ -369,10 +378,8 @@ const ManufacturerDashboard = () => {
       doc.internal.pageSize.height - 20
     );
 
-    // Save the PDF
     doc.save(`NewMedizon_Return_${returnItem.id}.pdf`);
   };
-
 
   const filterProducts = () => {
     let result = [...products];
@@ -425,56 +432,195 @@ const ManufacturerDashboard = () => {
     setFilteredProducts(sortedProducts);
   };
 
-  const saveProduct = async (e) => {
+
+
+  // const addNewProduct = async (e) => {
+  //   e.preventDefault();
+
+  //   const token = localStorage.getItem("token");
+  //   if (!token) {
+  //     alert("No authentication token found. Please log in again.");
+  //     navigate("/login");
+  //     return;
+  //   }
+
+  //   if (
+  //     !formValues.name ||
+  //     !formValues.stock ||
+  //     !formValues.category ||
+  //     !formValues.location ||
+  //     !formValues.company
+  //   ) {
+  //     alert("Please fill all required fields");
+  //     return;
+  //   }
+
+  //   const formData = new FormData();
+  //   formData.append("name", formValues.name);
+  //   formData.append("description", formValues.description || "");
+  //   formData.append("price", formValues.price || "");
+  //   formData.append("category", formValues.category);
+  //   formData.append("stock", formValues.stock);
+  //   formData.append("location", formValues.location);
+  //   formData.append("company", formValues.company);
+  //   formData.append("size", formValues.size || "");
+  //   formData.append("returnPolicy", formValues.returnPolicy || "");
+
+  //   if (formValues.imageFile instanceof File) {
+  //     formData.append("imageFile", formValues.imageFile);
+  //   }
+
+  //   if (formValues.videoFile instanceof File) {
+  //     formData.append("videoFile", formValues.videoFile);
+  //   }
+
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await axios.post(
+  //       "https://grammerly-backend.onrender.com/api/products/addProduct",
+  //       formData,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       }
+  //     );
+
+  //     if (response.status === 201) {
+  //       alert("Product added successfully!");
+  //       fetchProducts();
+  //       closeModal();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error adding product:", error.response?.data);
+  //     alert(error.response?.data?.message || "Error adding product");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+
+  const addNewProduct = async (e) => {
     e.preventDefault();
-    if (!formValues.name || !formValues.stock ||
-      !formValues.category || !formValues.location || !formValues.company) {
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please log in to add products");
+      navigate("/login");
+      return;
+    }
+
+    // Validate required fields
+    const requiredFields = ['name', 'stock', 'category', 'location', 'company'];
+    const missingFields = requiredFields.filter(field => !formValues[field]);
+
+    if (missingFields.length > 0) {
+      alert(`Please fill all required fields: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    const formData = new FormData();
+
+    // Append all product data
+    Object.entries(formValues).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        formData.append(key, value);
+      }
+    });
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        "https://grammerly-backend.onrender.com/api/products/addProduct",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.status === 201) {
+        alert("Product added successfully!");
+        fetchProducts();
+        closeModal();
+      }
+    } catch (error) {
+      console.error("Error adding product:", error);
+      alert(error.response?.data?.message || "Error adding product");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  const editExistingProduct = async (e) => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("No authentication token found. Please log in again.");
+      navigate("/login");
+      return;
+    }
+
+    if (
+      !formValues.name ||
+      !formValues.stock ||
+      !formValues.category ||
+      !formValues.location ||
+      !formValues.company
+    ) {
       alert("Please fill all required fields");
       return;
     }
 
     const formData = new FormData();
     formData.append("name", formValues.name);
-    formData.append("description", formValues.description);
-    formData.append("price", formValues.price);
+    formData.append("description", formValues.description || "");
+    formData.append("price", formValues.price || "");
     formData.append("category", formValues.category);
     formData.append("stock", formValues.stock);
     formData.append("location", formValues.location);
     formData.append("company", formValues.company);
-    formData.append("size", formValues.size);
-    formData.append("returnPolicy", formValues.returnPolicy);
-    if (formValues.imageFile) {
+    formData.append("size", formValues.size || "");
+    formData.append("returnPolicy", formValues.returnPolicy || "");
+
+    if (formValues.imageFile instanceof File) {
       formData.append("imageFile", formValues.imageFile);
     }
-    if (formValues.videoFile) {
+
+    if (formValues.videoFile instanceof File) {
       formData.append("videoFile", formValues.videoFile);
     }
 
+    const decoded = jwtDecode(token);
+    const userId = decoded.sub || decoded.userId || decoded.id;
+    formData.append("manufacturer_id", userId);
+
     try {
       setIsLoading(true);
-      const url = editProduct
-        ? `https://newmedizon.onrender.com/api/products/${editProduct._id}`
-        : "https://newmedizon.onrender.com/api/products";
-      const method = editProduct ? "put" : "post";
+      const response = await axios.put(
+        `https://grammerly-backend.onrender.com/api/products/${editProduct.id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      const response = await axios({
-        method,
-        url,
-        data: formData,
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      if (response.status === 200 || response.status === 201) {
-        alert("Product saved successfully!");
+      if (response.status === 200) {
+        alert("Product updated successfully!");
         fetchProducts();
         closeModal();
       }
     } catch (error) {
-      console.error("Error saving product:", error.response?.data);
-      alert(error.response?.data?.message || "Error saving product");
+      console.error("Error editing product:", error.response?.data);
+      alert(error.response?.data?.message || "Error editing product");
     } finally {
       setIsLoading(false);
     }
@@ -485,168 +631,36 @@ const ManufacturerDashboard = () => {
       alert("Invalid product ID!");
       return;
     }
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+
+    const confirmDelete = window.confirm("Are you sure you want to delete this product?");
+    if (!confirmDelete) return;
+
     try {
       setIsLoading(true);
-      await axios.delete(`https://newmedizon.onrender.com/api/products/${id}`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
+
+      await axios.delete(`https://grammerly-backend.onrender.com/api/products/${id}`, {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
       });
+
       alert("Product deleted successfully!");
-      fetchProducts();
+      await fetchProducts(); // Refresh the product list
     } catch (error) {
-      console.error("Error deleting product:", error);
+      console.error("Error deleting product:", error.response?.data || error.message);
       alert("Error deleting product. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateStockInMongoDB = async (productId, quantity) => {
-    try {
-      const response = await axios.put(
-        `https://newmedizon.onrender.com/api/products/update-stock/${productId}`,
-        { quantity },
-        {
-          headers: {
-            Authorization: `Bearer ${getToken()}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error updating stock:", error);
-      throw error;
-    }
-  };
 
-  const testProductUpdate = async (productId, quantity) => {
-    try {
-      console.log(`Testing update for ${productId} with quantity ${quantity}`);
-
-      const response = await axios.put(
-        `https://newmedizon.onrender.com/api/products/update-stock/${productId}`,
-        { quantity },
-        {
-          headers: {
-            Authorization: `Bearer ${getToken()}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log('Test successful:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Test failed:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
-      throw error;
-    }
-  };
-
-  const placeOrder = async (orderData) => {
-    try {
-      // 1. First verify stock for all items
-      const stockChecks = await Promise.all(
-        orderData.items.map(item =>
-          axios.get(`https://newmedizon.onrender.com/api/products/${item.product_id}`, {
-            headers: { Authorization: `Bearer ${getToken()}` }
-          })
-        )
-      );
-
-      // 2. Check if all items have sufficient stock
-      const allInStock = orderData.items.every((item, index) => {
-        return stockChecks[index].data.stock >= item.quantity;
-      });
-
-      if (!allInStock) {
-        throw new Error("Insufficient stock for one or more items");
-      }
-
-      // 3. Reduce stock for each item
-      await Promise.all(
-        orderData.items.map(item =>
-          axios.put(
-            `https://newmedizon.onrender.com/api/products/${item.product_id}/update-stock`,
-            { quantity: -item.quantity },
-            { headers: { Authorization: `Bearer ${getToken()}` } }
-          )
-        )
-      );
-
-      // 4. Create the order in Supabase
-      const { data: order, error } = await supabase
-        .from('product_order')
-        .insert([{
-          ...orderData,
-          status: 'completed', // Mark as completed since stock is updated
-          stock_updated: true
-        }])
-        .select();
-
-      if (error) throw error;
-
-      return order;
-
-    } catch (error) {
-      console.error("Order placement failed:", error);
-
-      // Revert stock updates if order creation failed
-      if (orderData.items) {
-        await Promise.all(
-          orderData.items.map(item =>
-            axios.put(
-              `https://newmedizon.onrender.com/api/products/${item.product_id}/update-stock`,
-              { quantity: item.quantity }, // Add back the quantity
-              { headers: { Authorization: `Bearer ${getToken()}` } }
-            ).catch(e => console.error("Stock revert failed:", e))
-          )
-        );
-      }
-
-      throw error;
-    }
-  };
-
-  const handlePlaceOrder = async (items, totalAmount, userId) => {
-    try {
-      setIsLoading(true);
-
-      const orderData = {
-        items: items,
-        total_amount: totalAmount,
-        customer_id: userId,
-        status: 'pending',
-        payment_method: 'cash',
-        address: {},
-        contact_number: '',
-        email: email
-      };
-
-      const order = await placeOrder(orderData);
-
-      // Refresh data
-      fetchProducts();
-      fetchOrders();
-
-      alert("Order placed successfully! Stock updated automatically.");
-
-    } catch (error) {
-      alert(`Order failed: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleOrderStatusChange = async (orderId, newStatus) => {
     try {
       setIsLoading(true);
 
-      // Get current order with items
+      // Fetch current order details from Supabase
       const { data: currentOrder, error: fetchError } = await supabase
         .from('product_order')
         .select('*')
@@ -654,40 +668,51 @@ const ManufacturerDashboard = () => {
         .single();
 
       if (fetchError) throw fetchError;
+      if (!currentOrder) throw new Error('Order not found');
 
-      // Handle stock updates based on status change
-      if (newStatus === 'cancelled') {
-        // Restore stock for cancelled orders
-        for (const item of currentOrder.items) {
-          try {
-            await axios.put(
-              `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
-              { quantity: item.quantity },
-              { headers: { Authorization: `Bearer ${getToken()}` } }
-            );
-          } catch (error) {
-            console.error(`Failed to restore stock for product ${item.product_id}:`, error);
-          }
-        }
+      // If status is same, no need to update
+      if (currentOrder.status === newStatus) {
+        alert(`Order is already in "${newStatus}" status.`);
+        return;
       }
-      else if (newStatus === 'processing' && currentOrder.status === 'pending') {
-        // Reduce stock when order moves from pending to processing
-        for (const item of currentOrder.items) {
-          try {
-            const response = await axios.put(
-              `https://newmedizon.onrender.com/api/products/update-stock/${item.product_id}`,
-              { quantity: -item.quantity },
-              { headers: { Authorization: `Bearer ${getToken()}` } }
-            );
 
-            if (!response.data.success) {
-              throw new Error(response.data.message || "Stock update failed");
+      // Update stock based on status change
+      if (newStatus === 'cancelled' && currentOrder.status !== 'cancelled') {
+        // Restore stock - add quantities back
+        await Promise.all(
+          currentOrder.items.map(async (item) => {
+            try {
+              await axios.put(
+                `https://grammerly-backend.onrender.com/api/products/update-stock/${item.product_id}`,
+                { quantity: item.quantity }, // positive quantity to restore
+                { headers: { Authorization: `Bearer ${getToken()}` } }
+              );
+            } catch (error) {
+              console.error(`Failed to restore stock for product ${item.product_id}:`, error);
+              // Log error but don't fail whole update
             }
-          } catch (error) {
-            console.error(`Failed to reduce stock for product ${item.product_id}:`, error);
-            throw new Error(`Failed to process order: ${error.message}`);
-          }
-        }
+          })
+        );
+      } else if (newStatus === 'processing' && currentOrder.status.toLowerCase() === 'order placed') {
+        // Reduce stock - subtract quantities
+        await Promise.all(
+          currentOrder.items.map(async (item) => {
+            try {
+              const response = await axios.put(
+                `https://grammerly-backend.onrender.com/api/products/update-stock/${item.product_id}`,
+                { quantity: -item.quantity }, // negative quantity to reduce stock
+                { headers: { Authorization: `Bearer ${getToken()}` } }
+              );
+
+              if (!response.data.success) {
+                throw new Error(response.data.message || 'Stock update failed');
+              }
+            } catch (error) {
+              console.error(`Failed to reduce stock for product ${item.product_id}:`, error);
+              throw new Error(`Failed to process order: ${error.message}`);
+            }
+          })
+        );
       }
 
       // Update order status in Supabase
@@ -698,12 +723,12 @@ const ManufacturerDashboard = () => {
 
       if (error) throw error;
 
-      // Refresh data
-      fetchProducts();
-      fetchOrders();
-      if (activePage === 'dashboard') fetchDashboardData();
+      // Refresh UI data
+      await fetchProducts();
+      await fetchOrders();
+      if (activePage === 'dashboard') await fetchDashboardData();
 
-      alert(`Order status updated to ${newStatus}`);
+      alert(`Order status updated to "${newStatus}"`);
     } catch (error) {
       console.error('Status change failed:', error);
       alert(`Error: ${error.message}`);
@@ -712,438 +737,282 @@ const ManufacturerDashboard = () => {
     }
   };
 
-  const updateStock = async (productId, quantity) => {
-    try {
-      // First try the primary endpoint format
-      try {
-        const response = await axios.put(
-          `https://newmedizon.onrender.com/api/products/update-stock/${productId}`,
-          { quantity },
-          { headers: { Authorization: `Bearer ${getToken()}` } }
-        );
-        return response.data;
-      } catch (firstError) {
-        // If first format fails, try alternative format
-        const response = await axios.put(
-          `https://newmedizon.onrender.com/api/products/${productId}/update-stock`,
-          { quantity },
-          { headers: { Authorization: `Bearer ${getToken()}` } }
-        );
-        return response.data;
-      }
-    } catch (error) {
-      console.error('Stock update error:', {
-        productId,
-        error: error.response?.data || error.message
-      });
-      throw error;
-    }
-  };
 
-  const verifyProductExists = async (productId) => {
-    try {
-      const response = await axios.get(
-        `https://newmedizon.onrender.com/api/products/${productId}`,
-        { headers: { Authorization: `Bearer ${getToken()}` } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Product verification failed:', error);
-      return null;
-    }
-  };
-
-  const syncStockLevels = async () => {
+  const handleReturnStatusUpdate = async (returnId, newStatus) => {
     try {
       setIsLoading(true);
-      console.log("Starting stock synchronization...");
 
-      // 1. Get pending orders
-      const { data: pendingOrders, error: orderError } = await supabase
-        .from('product_order')
-        .select('*')
-        .eq('status', 'pending');
+      const updates = {
+        status: newStatus,
+        processed_at: new Date().toISOString(),
+        notes: returnNotes
+      };
 
-      if (orderError) throw orderError;
-
-      if (!pendingOrders?.length) {
-        console.log("No pending orders found");
-        alert("No pending orders to process");
-        return;
+      if (newStatus === 'refunded') {
+        updates.refund_amount = selectedReturn?.refund_amount || 0;
+        updates.refund_date = new Date().toISOString();
       }
 
-      console.log(`Found ${pendingOrders.length} pending orders`);
+      const { data, error } = await supabase
+        .from('order_returns')
+        .update(updates)
+        .eq('id', returnId)
+        .select();
 
-      const updatedProducts = [...products];
-      let hasErrors = false;
+      if (error) throw error;
 
-      // 2. Process each order
-      for (const order of pendingOrders) {
-        try {
-          console.log(`Processing order ${order.id}`);
+      if (newStatus === 'approved') {
+        const { data: orderData, error: orderError } = await supabase
+          .from('product_order')
+          .select('items')
+          .eq('id', selectedReturn.order_id)
+          .single();
 
-          if (!order.items?.length) {
-            console.warn(`Order ${order.id} has no items, skipping`);
-            continue;
+        if (!orderError && orderData.items) {
+          for (const item of orderData.items) {
+            await axios.put(
+              `https://grammerly-backend.onrender.com/api/products/update-stock/${item.product_id}`,
+              { quantity: item.quantity },
+              {
+                headers: {
+                  Authorization: `Bearer ${getToken()}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
           }
-
-          // 3. Verify and update stock for each item
-          for (const item of order.items) {
-            try {
-              // Verify product exists
-              const product = await verifyProductExists(item.product_id);
-              if (!product) {
-                throw new Error(`Product ${item.product_id} not found in database`);
-              }
-
-              // Find product in local state
-              const productIndex = updatedProducts.findIndex(p => p._id === item.product_id);
-              if (productIndex === -1) {
-                throw new Error(`Product ${item.product_id} not found in local state`);
-              }
-
-              // Verify sufficient stock
-              if (updatedProducts[productIndex].stock < item.quantity) {
-                throw new Error(`Insufficient stock for ${product.name}`);
-              }
-
-              // Update stock
-              console.log(`Updating stock for ${product.name}, quantity: -${item.quantity}`);
-              const updateResponse = await updateStock(item.product_id, -item.quantity);
-
-              if (!updateResponse.success) {
-                throw new Error(updateResponse.message || "Stock update failed");
-              }
-
-              // Update local state
-              updatedProducts[productIndex].stock -= item.quantity;
-              setUpdatingStocks(prev => ({
-                ...prev,
-                [item.product_id]: updatedProducts[productIndex].stock
-              }));
-
-            } catch (itemError) {
-              console.error(`Failed to process item ${item.product_id}:`, itemError);
-              hasErrors = true;
-              continue;
-            }
-          }
-
-          // Mark order as completed if no errors
-          if (!hasErrors) {
-            const { error: updateError } = await supabase
-              .from('product_order')
-              .update({ status: 'Confirm' })
-              .eq('id', order.id);
-
-            if (updateError) throw updateError;
-          }
-
-        } catch (orderError) {
-          console.error(`Failed to process order ${order.id}:`, orderError);
-          hasErrors = true;
-
-          await supabase
-            .from('product_order')
-            .update({
-              status: 'failed',
-              error: orderError.message
-            })
-            .eq('id', order.id)
-            .catch(e => console.error("Failed to update order status:", e));
         }
       }
 
-      // Update state
-      setProducts(updatedProducts);
-      setUpdatingStocks({});
-      await fetchOrders();
-
-      if (hasErrors) {
-        alert("Sync completed with some errors. Check console for details.");
-      } else {
-        alert("Stock synchronization completed successfully!");
-      }
-
-    } catch (mainError) {
-      console.error("Sync failed:", mainError);
-      alert(`Sync failed: ${mainError.message}`);
+      alert(`Return status updated to ${newStatus}`);
+      setShowReturnModal(false);
+      await fetchReturns();
+    } catch (error) {
+      console.error('Error updating return status:', error);
+      alert(`Error: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const generateOrderPDF = (order) => {
-    const doc = new jsPDF();
+const generateOrderPDF = (order) => {
+  const doc = new jsPDF();
 
-    // Add logo or title
-    doc.setFontSize(18);
-    doc.setTextColor(40, 53, 147);
-    doc.text('NewMedizon - Order Invoice', 105, 20, { align: 'center' });
+  // ...existing code for headers...
 
-    // Order details section
-    doc.setFontSize(12);
-
-    // Left column - Order info
-    doc.text(`Order ID: ${order.id}`, 14, 30);
-    doc.text(`Date: ${new Date(order.created_at).toLocaleDateString()}`, 14, 35);
-    doc.text(`Status: ${order.status.toUpperCase()}`, 14, 40);
-
-    // Right column - Customer info
-    doc.text(`Customer: ${order.full_name || 'N/A'}`, 105, 30);
-    doc.text(`Email: ${order.email || 'N/A'}`, 105, 35);
-    doc.text(`Contact: ${order.contact_number || 'N/A'}`, 105, 40);
-
-    // Payment info
-    doc.text(`Payment Method: ${order.payment_method || 'N/A'}`, 14, 50);
-    doc.text(`Total Amount: ₹${order.total_amount.toFixed(2)}`, 105, 50);
-
-    // Address section
-    if (order.address) {
-      doc.text('Shipping Address:', 14, 60);
-      const addressLines = [
-        order.address.street,
-        `${order.address.city}, ${order.address.state}`,
-        order.address.postal_code,
-        order.address.country
-      ].filter(Boolean);
-
-      addressLines.forEach((line, index) => {
-        doc.text(line, 20, 65 + (index * 5));
-      });
+  // Parse items from ordered_items_text
+  let items = [];
+  if (order.ordered_items_text) {
+    try {
+      const parsed = JSON.parse(order.ordered_items_text);
+      items = Array.isArray(parsed.ordered_items) ? parsed.ordered_items : [];
+    } catch {
+      items = [];
     }
+  }
 
-    // Items table
-    if (order.items && order.items.length > 0) {
-      // Table headers
-      const headers = [
-        { header: 'Product', dataKey: 'name' },
-        { header: 'Unit Price', dataKey: 'price' },
-        { header: 'Quantity', dataKey: 'quantity' },
-        { header: 'Total', dataKey: 'total' }
-      ];
+  if (items.length > 0) {
+    const headers = [
+      { header: 'No.', dataKey: 'index', width: 10 },
+      { header: 'Product', dataKey: 'name', width: 70 },
+      { header: 'Unit Price (₹)', dataKey: 'price', width: 30 },
+      { header: 'Qty', dataKey: 'quantity', width: 20 },
+      { header: 'Total (₹)', dataKey: 'total', width: 30 }
+    ];
 
-      // Prepare table data
-      const tableData = order.items.map(item => ({
-        name: item.name || 'N/A',
-        price: `₹${item.price ? item.price.toFixed(2) : '0.00'}`,
-        quantity: item.quantity || 0,
-        total: `₹${(item.price * item.quantity).toFixed(2)}`
-      }));
+    const tableData = items.map((item, index) => ({
+      index: index + 1,
+      name: item.product_name || item.name || 'N/A',
+      price: item.price ? item.price.toFixed(2) : '0.00',
+      quantity: item.quantity || 0,
+      total: (item.price * item.quantity).toFixed(2)
+    }));
 
-      // Add total row
+    const subtotal = order.total_amount;
+    const tax = 0;
+    const grandTotal = subtotal + tax;
+
+    tableData.push({
+      index: '',
+      name: '',
+      price: 'SUBTOTAL',
+      quantity: '',
+      total: subtotal.toFixed(2)
+    });
+
+    if (tax > 0) {
       tableData.push({
-        name: 'TOTAL',
-        price: '',
+        index: '',
+        name: '',
+        price: 'TAX',
         quantity: '',
-        total: `₹${order.total_amount.toFixed(2)}`
-      });
-
-      // Generate the table
-      autoTable(doc, {
-        startY: 85,
-        head: [headers.map(h => h.header)],
-        body: tableData.map(row => headers.map(h => row[h.dataKey])),
-        theme: 'grid',
-        headStyles: {
-          fillColor: [40, 53, 147],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        columnStyles: {
-          0: { cellWidth: 'auto' }, // Product name
-          1: { cellWidth: 30 },     // Unit Price
-          2: { cellWidth: 25 },     // Quantity
-          3: { cellWidth: 30 }      // Total
-        },
-        styles: {
-          fontSize: 10,
-          cellPadding: 3,
-          overflow: 'linebreak'
-        },
-        didDrawPage: function (data) {
-          // Style the total row
-          if (data.pageNumber === data.pageCount) {
-            const lastRow = data.table.body[data.table.body.length - 1];
-            doc.setFontStyle('bold');
-            doc.setTextColor(40, 53, 147);
-            lastRow.cells.forEach(cell => {
-              cell.styles.fontStyle = 'bold';
-              cell.styles.textColor = [40, 53, 147];
-            });
-          }
-        }
+        total: tax.toFixed(2)
       });
     }
 
-    // Footer
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(
-      'Thank you for your business! For any queries, please contact support@newmedizon.com',
-      105,
-      doc.lastAutoTable.finalY + 15,
-      { align: 'center' }
-    );
+    tableData.push({
+      index: '',
+      name: '',
+      price: 'GRAND TOTAL',
+      quantity: '',
+      total: grandTotal.toFixed(2)
+    });
 
-    // Save the PDF
-    doc.save(`NewMedizon_Order_${order.id}.pdf`);
-  };
+    autoTable(doc, {
+      startY: 100,
+      head: [headers.map(h => h.header)],
+      body: tableData.map(row => headers.map(h => row[h.dataKey])),
+      theme: 'grid',
+      // ...existing autoTable options...
+    });
+  }
+
+  // ...rest of your PDF code...
+  doc.save(`Invoice_${order.id}.pdf`);
+};
   const generateAllOrdersPDF = () => {
     if (orders.length === 0) {
       alert("No orders available to download");
       return;
     }
 
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm'
+    });
 
-    // Add title
+    const primaryColor = [40, 53, 147];
+    const secondaryColor = [100, 100, 100];
+    const margin = 15;
+
     doc.setFontSize(18);
-    doc.setTextColor(40, 53, 147);
-    doc.text('NewMedizon - All Orders Report', 105, 20, { align: 'center' });
+    doc.setTextColor(...primaryColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(' ORDERS REPORT', doc.internal.pageSize.width / 2, margin, { align: 'center' });
 
-    // Add report details
-    doc.setFontSize(12);
-    doc.text(`Report Date: ${new Date().toLocaleDateString()}`, 14, 30);
-    doc.text(`Total Orders: ${orders.length}`, 14, 40);
+    doc.setFontSize(10);
+    doc.setTextColor(...secondaryColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, margin, margin + 10);
+    doc.text(`Total Orders: ${orders.length}`, doc.internal.pageSize.width - margin, margin + 10, { align: 'right' });
 
-    // Group orders by status for summary
-    const statusCounts = orders.reduce((acc, order) => {
-      acc[order.status] = (acc[order.status] || 0) + 1;
-      return acc;
-    }, {});
+    const columns = [
+      { header: 'ORDER ID', dataKey: 'id', width: 20 },
+      { header: 'DATE', dataKey: 'date', width: 20 },
+      { header: 'CUSTOMER', dataKey: 'customer', width: 30 },
+      { header: 'EMAIL', dataKey: 'email', width: 40 },
+      { header: 'STATUS', dataKey: 'status', width: 25 },
+      { header: 'AMOUNT (₹)', dataKey: 'amount', width: 25 },
+      { header: 'PAYMENT', dataKey: 'payment', width: 25 },
+      { header: 'items', dataKey: 'items', width: 15 }
+    ];
 
-    // Add status summary
-    let yPosition = 50;
-    doc.text('Order Status Summary:', 14, yPosition);
-    yPosition += 10;
+    const tableData = orders.map(order => ({
+      id: order.id.toString(),
+      date: new Date(order.created_at).toLocaleDateString(),
+      customer: order.full_name || 'N/A',
+      email: order.email || 'N/A',
+      status: order.status.toUpperCase(),
+      amount: order.total_amount.toFixed(2),
+      payment: order.payment_method || 'N/A',
+      items: order.ordered_items ? order.ordered_items.length.toString() : '0'
+    }));
 
-    Object.entries(statusCounts).forEach(([status, count]) => {
-      doc.text(`${status.toUpperCase()}: ${count}`, 20, yPosition);
-      yPosition += 10;
-    });
-
-    yPosition += 15;
-
-    // Add each order as a table
-    orders.forEach((order, index) => {
-      // Add page break if needed (except for first order)
-      if (index > 0) {
-        doc.addPage();
-        yPosition = 20;
-      }
-
-      // Order header
-      doc.setFontSize(14);
-      doc.setTextColor(40, 53, 147);
-      doc.text(`Order #${order.id}`, 14, yPosition);
-      yPosition += 10;
-
-      // Order details
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Date: ${new Date(order.created_at).toLocaleDateString()}`, 14, yPosition);
-      doc.text(`Status: ${order.status.toUpperCase()}`, 100, yPosition);
-      yPosition += 5;
-      doc.text(`Customer: ${order.full_name || 'N/A'}`, 14, yPosition);
-      doc.text(`Amount: ₹${order.total_amount.toFixed(2)}`, 100, yPosition);
-      yPosition += 10;
-
-      // Items table
-      if (order.items && order.items.length > 0) {
-        const headers = [
-          { header: 'Product', dataKey: 'name' },
-          { header: 'Unit Price', dataKey: 'price' },
-          { header: 'Quantity', dataKey: 'quantity' },
-          { header: 'Total', dataKey: 'total' }
-        ];
-
-        const tableData = order.items.map(item => ({
-          name: item.name || 'N/A',
-          price: `₹${item.price ? item.price.toFixed(2) : '0.00'}`,
-          quantity: item.quantity || 0,
-          total: `₹${(item.price * item.quantity).toFixed(2)}`
-        }));
-
-        // Add total row
-        tableData.push({
-          name: 'TOTAL',
-          price: '',
-          quantity: '',
-          total: `₹${order.total_amount.toFixed(2)}`
-        });
-
-        autoTable(doc, {
-          startY: yPosition,
-          head: [headers.map(h => h.header)],
-          body: tableData.map(row => headers.map(h => row[h.dataKey])),
-          theme: 'grid',
-          headStyles: {
-            fillColor: [40, 53, 147],
-            textColor: 255,
-            fontStyle: 'bold'
-          },
-          columnStyles: {
-            0: { cellWidth: 'auto' },
-            1: { cellWidth: 30 },
-            2: { cellWidth: 25 },
-            3: { cellWidth: 30 }
-          },
-          styles: {
-            fontSize: 9,
-            cellPadding: 2
-          },
-          didDrawPage: function (data) {
-            if (data.pageNumber === data.pageCount) {
-              const lastRow = data.table.body[data.table.body.length - 1];
-              doc.setFontStyle('bold');
-              doc.setTextColor(40, 53, 147);
-              lastRow.cells.forEach(cell => {
-                cell.styles.fontStyle = 'bold';
-                cell.styles.textColor = [40, 53, 147];
-              });
-            }
-          }
-        });
-
-        yPosition = doc.lastAutoTable.finalY + 10;
-      }
-
-      // Add separator if not last order
-      if (index < orders.length - 1) {
-        doc.setDrawColor(200, 200, 200);
-        doc.line(14, yPosition, 200, yPosition);
-        yPosition += 15;
+    autoTable(doc, {
+      startY: margin + 20,
+      head: [columns.map(col => col.header)],
+      body: tableData.map(row => columns.map(col => row[col.dataKey])),
+      theme: 'grid',
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 9,
+        cellPadding: 4,
+        halign: 'center'
+      },
+      bodyStyles: {
+        fontSize: 8,
+        cellPadding: 3,
+        textColor: [0, 0, 0],
+        lineColor: [200, 200, 200],
+        lineWidth: 0.2
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      columnStyles: columns.reduce((styles, col) => {
+        styles[col.header] = {
+          cellWidth: col.width,
+          halign: col.dataKey === 'amount' ? 'right' : 'left'
+        };
+        return styles;
+      }, {}),
+      margin: { horizontal: margin },
+      pageBreak: 'auto',
+      styles: {
+        overflow: 'linebreak',
+        minCellHeight: 8
+      },
+      didDrawPage: function (data) {
+        doc.setFontSize(8);
+        doc.setTextColor(...secondaryColor);
+        doc.text(
+          `Page ${data.pageCount} of ${data.pageNumber}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
       }
     });
 
-    // Save the PDF
-    doc.save(`NewMedizon_All_Orders_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    doc.save(`Payment Recieved_${timestamp}.pdf`);
   };
+
+
 
   const openModal = (product = null) => {
     if (product) {
-      setEditProduct(product);
+      // Edit mode: भरलेला फॉर्म
       setFormValues({
         name: product.name || "",
+        company: product.company || "",
         description: product.description || "",
         price: product.price || "",
         category: product.category || "",
         stock: product.stock || "",
         location: product.location || "",
-        company: product.company || "",
         size: product.size || "",
-        videoUrl: product.videoUrl || "",
-        imageUrl: product.imageUrl || "",
+        returnPolicy: product.returnPolicy || "no",
+        imageUrl: product.image_url || "",
+        videoUrl: product.video_url || "",
         imageFile: null,
         videoFile: null,
-        returnPolicy: product.returnPolicy || "",
       });
+      setEditProduct(product);  // edit mode चालू करा
     } else {
-      resetForm();
+      // Add mode: रिकामे फॉर्म
+      setFormValues({
+        name: "",
+        company: "",
+        description: "",
+        price: "",
+        category: "",
+        stock: "",
+        location: "",
+        size: "",
+        returnPolicy: "no",
+        imageUrl: "",
+        videoUrl: "",
+        imageFile: null,
+        videoFile: null,
+      });
+      setEditProduct(null);  // add mode चालू करा
     }
     setIsModalOpen(true);
   };
+
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -1164,7 +1033,7 @@ const ManufacturerDashboard = () => {
       imageUrl: "",
       imageFile: null,
       videoFile: null,
-      returnPolicy: ""
+      returnPolicy: "no"
     });
     setEditProduct(null);
   };
@@ -1210,7 +1079,7 @@ const ManufacturerDashboard = () => {
       setIsLoading(true);
       const token = getToken();
       const response = await axios.put(
-        "https://newmedizon.onrender.com/api/auth/update-password",
+        "https://grammerly-backend.onrender.com/api/auth/update-password",
         { email, oldPassword, newPassword },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -1258,18 +1127,6 @@ const ManufacturerDashboard = () => {
     setShowJsonModal(true);
   };
 
-  const renderStatusBadge = (status) => {
-    const color = orderStatusColors[status] || 'gray';
-    return (
-      <span
-        className="status-badge"
-        style={{ backgroundColor: color }}
-      >
-        {status.toUpperCase()}
-      </span>
-    );
-  };
-
   return (
     <div className="dashboard-container">
       <div className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
@@ -1280,40 +1137,26 @@ const ManufacturerDashboard = () => {
           <FaBars />
         </button>
         <ul>
-          <li
-            className={activePage === "dashboard" ? "active" : ""}
-            onClick={() => setActivePage("dashboard")}
-          >
+          <li className={activePage === "dashboard" ? "active" : ""} onClick={() => setActivePage("dashboard")}>
             <FaChartPie />
-            <span>Dashboard</span>
+            {!isCollapsed && <span>Dashboard</span>}
           </li>
-          <li
-            className={activePage === "products" ? "active" : ""}
-            onClick={() => setActivePage("products")}
-          >
+          <li className={activePage === "products" ? "active" : ""} onClick={() => setActivePage("products")}>
             <FaBox />
-            <span>Products</span>
+            {!isCollapsed && <span>Products</span>}
           </li>
-          <li
-            className={activePage === "orders" ? "active" : ""}
-            onClick={() => setActivePage("orders")}
-          >
+          <li className={activePage === "orders" ? "active" : ""} onClick={() => setActivePage("orders")}>
             <FaClipboardList />
-            <span>Orders</span>
+            {!isCollapsed && <span>Orders</span>}
           </li>
-          <li
-            className={activePage === "returns" ? "active" : ""}
-            onClick={() => setActivePage("returns")}
-          >
+          <li className={activePage === "returns" ? "active" : ""} onClick={() => setActivePage("returns")}>
             <FaReply />
-            <span>Returns</span>
+            {!isCollapsed && <span>Returns</span>}
           </li>
-          <li
-            className={activePage === "settings" ? "active" : ""}
-            onClick={() => setActivePage("settings")}
-          >
+
+          <li className={activePage === "settings" ? "active" : ""} onClick={() => setActivePage("settings")}>
             <FaCogs />
-            <span>Settings</span>
+            {!isCollapsed && <span>Settings</span>}
           </li>
         </ul>
         <button className="logout-btn-manuf" onClick={handleLogout}>
@@ -1335,6 +1178,7 @@ const ManufacturerDashboard = () => {
               <div className="card">
                 <h3>Total Orders</h3>
                 <p>{dashboardData.totalOrders}</p>
+
                 <div
                   className="view-all-btn"
                   onClick={() => setActivePage("orders")}
@@ -1373,10 +1217,11 @@ const ManufacturerDashboard = () => {
                         <td>{order.id}</td>
                         <td>{order.full_name}</td>
                         <td>₹{order.total_amount}</td>
-                        <td>{renderStatusBadge(order.status || 'pending')}</td>
+                        <td>{renderStatusBadge(order.status || 'Order Placed')}</td>
                         <td>{new Date(order.created_at).toLocaleDateString()}</td>
                       </tr>
                     ))}
+
                   </tbody>
                 </table>
               ) : (
@@ -1394,7 +1239,6 @@ const ManufacturerDashboard = () => {
                 <button className="add-product-btn" onClick={() => openModal()}>
                   <FaPlus /> Add Product
                 </button>
-
               </div>
             </div>
 
@@ -1492,25 +1336,27 @@ const ManufacturerDashboard = () => {
                     filteredProducts.map((product) => (
                       <tr key={product._id}>
                         <td>
-                          {product.imageUrl && (
+                          {product.image_url && (
                             <img
-                              src={product.imageUrl}
-                              alt={product.name}
-                              className="product-image"
+                              src={product.image_url || "/placeholder.png"}
+                              alt="Product"
+                              style={{ width: "100px", height: "100px", objectFit: "cover" }}
                             />
+
                           )}
+
                         </td>
                         <td>
-                          {product.videoUrl ? (
-                            <button
-                              className="video-preview-button"
-                              onClick={() => openVideoModal(product.videoUrl)}
-                            >
+                          {product.video_url ? (
+                            <button onClick={() => openVideoModal(product.video_url)}>
                               <FaVideo /> View Video
                             </button>
                           ) : (
                             <span>No Video</span>
                           )}
+
+
+
                         </td>
                         <td>{product.name}</td>
                         <td>{product.company}</td>
@@ -1531,19 +1377,23 @@ const ManufacturerDashboard = () => {
                         <td>{product.location}</td>
                         <td>{product.size}</td>
                         <td>{product.returnPolicy === 'yes' ? 'Yes' : 'No'}</td>
-                        <td>
+                        <td className="action-buttons">
                           <button
                             className="action-btn edit-btn"
                             onClick={() => openModal(product)}
                           >
                             <FaEdit />
                           </button>
+
+
                           <button
                             className="action-btn delete-btn"
-                            onClick={() => deleteProduct(product._id)}
+                            onClick={() => deleteProduct(product.id)}
                           >
                             <FaTrash />
                           </button>
+
+
                         </td>
                       </tr>
                     ))
@@ -1566,12 +1416,14 @@ const ManufacturerDashboard = () => {
           <div className="modal-overlay">
             <div className="modal">
               <div className="modal-header">
-                <h3>{editProduct ? "Edit Product" : "Add Product"}</h3>
+                <h3>{editProduct ? "Edit Product" : "Add New Product"}</h3>
                 <button className="close-modal" onClick={closeModal}>
                   &times;
                 </button>
               </div>
-              <form onSubmit={saveProduct}>
+
+              <form onSubmit={editProduct ? editExistingProduct : addNewProduct}>
+                {/* Product Name and Company */}
                 <div className="form-row">
                   <div className="form-group">
                     <label>Name*</label>
@@ -1597,6 +1449,7 @@ const ManufacturerDashboard = () => {
                   </div>
                 </div>
 
+                {/* Description */}
                 <div className="form-group">
                   <label>Description</label>
                   <textarea
@@ -1608,6 +1461,7 @@ const ManufacturerDashboard = () => {
                   />
                 </div>
 
+                {/* Price, Stock, and Size */}
                 <div className="form-row">
                   <div className="form-group">
                     <label>Price</label>
@@ -1637,11 +1491,12 @@ const ManufacturerDashboard = () => {
                       name="size"
                       value={formValues.size}
                       onChange={handleInputChange}
-                      placeholder="Product size"
+                      placeholder="Product Size"
                     />
                   </div>
                 </div>
 
+                {/* Category and Location */}
                 <div className="form-row">
                   <div className="form-group">
                     <label>Category*</label>
@@ -1676,6 +1531,8 @@ const ManufacturerDashboard = () => {
                     </select>
                   </div>
                 </div>
+
+                {/* Return Policy */}
                 <div className="form-group">
                   <label>Return Policy*</label>
                   <select
@@ -1689,7 +1546,9 @@ const ManufacturerDashboard = () => {
                   </select>
                 </div>
 
+                {/* Image and Video Upload */}
                 <div className="form-row">
+                  {/* Image Upload */}
                   <div className="form-group">
                     <label>Product Image*</label>
                     <input
@@ -1708,17 +1567,21 @@ const ManufacturerDashboard = () => {
                         <button
                           type="button"
                           className="remove-file-btn"
-                          onClick={() => setFormValues(prev => ({
-                            ...prev,
-                            imageUrl: "",
-                            imageFile: null
-                          }))}
+                          onClick={() =>
+                            setFormValues((prev) => ({
+                              ...prev,
+                              imageUrl: "",
+                              imageFile: null,
+                            }))
+                          }
                         >
                           Remove
                         </button>
                       </div>
                     )}
                   </div>
+
+                  {/* Video Upload */}
                   <div className="form-group">
                     <label>Product Video/360 View</label>
                     <input
@@ -1737,11 +1600,13 @@ const ManufacturerDashboard = () => {
                         <button
                           type="button"
                           className="remove-file-btn"
-                          onClick={() => setFormValues(prev => ({
-                            ...prev,
-                            videoUrl: "",
-                            videoFile: null
-                          }))}
+                          onClick={() =>
+                            setFormValues((prev) => ({
+                              ...prev,
+                              videoUrl: "",
+                              videoFile: null,
+                            }))
+                          }
                         >
                           Remove
                         </button>
@@ -1750,9 +1615,14 @@ const ManufacturerDashboard = () => {
                   </div>
                 </div>
 
+                {/* Actions */}
                 <div className="modal-actions">
                   <button type="submit" className="btn-primary" disabled={isLoading}>
-                    {isLoading ? "Processing..." : editProduct ? "Save Changes" : "Add Product"}
+                    {isLoading
+                      ? "Processing..."
+                      : editProduct
+                        ? "Save Changes"
+                        : "Add Product"}
                   </button>
                   <button
                     type="button"
@@ -1767,6 +1637,7 @@ const ManufacturerDashboard = () => {
             </div>
           </div>
         )}
+
 
         {showVideoModal && (
           <div className="video-modal-overlay">
@@ -1829,7 +1700,7 @@ const ManufacturerDashboard = () => {
                     <th>Payment</th>
                     <th>Status</th>
                     <th>Address</th>
-                    <th>Items</th>
+                    <th>items</th>
                     <th>Date</th>
                     <th>Invoice</th>
                     <th>Actions</th>
@@ -1845,28 +1716,42 @@ const ManufacturerDashboard = () => {
                         <td>{order.contact_number}</td>
                         <td>₹{order.total_amount}</td>
                         <td>{order.payment_method}</td>
-                        <td>{renderStatusBadge(order.status || 'pending')}</td>
+                        <td>{renderStatusBadge(order.status || 'Order Placed')}</td>
                         <td className="address-cell">
-                          {order.address && (
+                          {order.address_line1 || order.landmark || order.pin_code ? (
                             <>
-                              <div>{order.address.street}</div>
-                              <div>{order.address.city}, {order.address.state}</div>
-                              <div>{order.address.postal_code}</div>
+                              <div>{order.address_line1}</div>
+                              <div>{order.landmark}</div>
+                              <div>{order.pin_code}</div>
                             </>
+                          ) : (
+                            <span>Address not available</span>
                           )}
                         </td>
-                        <td className="items-cell">
-                          {order.items && order.items.map((item, index) => (
-                            <div
-                              key={index}
-                              className="clickable-item"
-                              onClick={() => showOrderItemDetails(item)}
-                            >
-                              {item.name} (Qty: {item.quantity})
-                              <FaInfoCircle className="info-icon" />
-                            </div>
-                          ))}
-                        </td>
+
+                       <td className="items-cell">
+  {(() => {
+    let items = [];
+    if (order.ordered_items_text) {
+      try {
+        const parsed = JSON.parse(order.ordered_items_text);
+        items = Array.isArray(parsed.ordered_items) ? parsed.ordered_items : [];
+      } catch {
+        items = [];
+      }
+    }
+    return items.map((item, index) => (
+      <div
+        key={index}
+        className="clickable-item"
+        onClick={() => showOrderItemDetails(item)}
+      >
+        {item.product_name} (Qty: {item.quantity})
+        <FaInfoCircle className="info-icon" />
+      </div>
+    ));
+  })()}
+</td>
                         <td>{new Date(order.created_at).toLocaleDateString()}</td>
                         <td>
                           <button
@@ -1880,7 +1765,7 @@ const ManufacturerDashboard = () => {
                           </button>
                         </td>
                         <td className="order-actions">
-                          {order.status === 'pending' && (
+                          {order.status === 'Order Placed' && (
                             <button
                               className="processing-btn"
                               onClick={(e) => {
@@ -2007,22 +1892,24 @@ const ManufacturerDashboard = () => {
                             'N/A'}
                         </td>
                         <td>
-                          <button
-                            className="action-btn view-btn"
-                            onClick={() => {
-                              setSelectedReturn(returnItem);
-                              setShowReturnModal(true);
-                            }}
-                          >
-                            <FaExchangeAlt />
-                            Process
-                          </button>
-                          <button
-                            className="action-btn pdf-btn"
-                            onClick={() => generateReturnPDF(returnItem)}
-                          >
-                            <FaFilePdf /> PDF
-                          </button>
+                          <div className="action-buttons">
+                            <button
+                              className="action-btn view-btn"
+                              onClick={() => {
+                                setSelectedReturn(returnItem);
+                                setShowReturnModal(true);
+                              }}
+                            >
+                              <FaExchangeAlt />
+                              Process
+                            </button>
+                            <button
+                              className="action-btn pdf-btn"
+                              onClick={() => generateReturnPDF(returnItem)}
+                            >
+                              <FaFilePdf /> PDF
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -2037,7 +1924,6 @@ const ManufacturerDashboard = () => {
               </table>
             </div>
 
-            {/* Return Action Modal */}
             {showReturnModal && selectedReturn && (
               <div className="modal-overlay">
                 <div className="modal">
@@ -2090,9 +1976,9 @@ const ManufacturerDashboard = () => {
                       required
                     >
                       <option value="">Select action</option>
-                      <option value="Return Approved">Approve Return</option>
-                      <option value="rejected"> Cancel  request</option>
-                      <option value="refunded">Process Refund</option>
+                      <option value="approved">Approve Return</option>
+                      <option value="rejected">Reject Return</option>
+
                     </select>
                   </div>
 
@@ -2145,8 +2031,7 @@ const ManufacturerDashboard = () => {
               </div>
             )}
           </div>
-        )
-        };
+        )}
         {activePage === "settings" && (
           <div className="settings-container">
             <h2>Account Settings</h2>

@@ -1,42 +1,89 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .app-container {
-    display: flex;
-    height: 100vh;
-  }
-  
-  .sidebar {
-    width: 200px;
-    background-color: #333;
-    color: white;
-    padding: 20px;
-  }
-  
-  .sidebar ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .sidebar ul li {
-    margin: 10px 0;
-  }
-  
-  .sidebar a {
-    color: white;
-    text-decoration: none;
-  }
-  
-  .main-content {
-    flex: 1;
-    padding: 20px;
-  }
-  
-  .dashboard {
-    font-size: 24px;
-    font-weight: bold;
-  }
-  
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5eedc; /* Light pink background for the whole app */
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  padding: 20px; /* Spacing around the container */
+  box-sizing: border-box;
+}
+.sidebar {
+  width: 262px;
+  height: 100vh;
+  padding: 20px 20px 0 20px;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #f5eedc; /* Light pink */
+  color: #1a1a1a; /* Dark text color for contrast */
+  border: 2px solid #e0bbf7; /* Light border for contrast */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Subtle shadow */
+  box-sizing: border-box;
+  transition: width 0.3s ease;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 22px;
+  color: #6a1b9a; /* Deep purple for highlight */
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 37px;
+}
+
+.sidebar ul li {
+  margin: 12px 0;
+}
+
+.sidebar a {
+  color: #0d47a1; /* Darker blue for better contrast */
+  text-decoration: none;
+  font-size: 16px;
+  padding: 8px 12px;
+  display: block;
+  border-radius: 8px;
+  transition: background 0.2s ease-in-out;
+}
+
+.sidebar a:hover {
+  background-color: #bbdefb; /* Light blue on hover */
+  color: #000;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  border-radius: 16px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.dashboard {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4a148c;
+}
+
+.logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.site-logo {
+  width: 160px;
+  height: auto;
+  border-radius: 12px;
+  border: 2px solid #d1c4e9;
+}

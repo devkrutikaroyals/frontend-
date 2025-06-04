@@ -13,7 +13,7 @@ const ApproveManufacturer = () => {
 
     if (email) {
       axios
-        .get(`https://newmedizon.onrender.com/api/auth/approve-manufacturer?email=${email}`)
+        .get(`https://grammerly-backend.onrender.com/api/auth/approve-manufacturer?email=${email}`)
         .then((response) => {
           setMessage(response.data.message);
           setTimeout(() => {

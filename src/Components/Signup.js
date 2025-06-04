@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "../styles/auth.css";
-import signupImage from "../images/pic3.jpg"; // Ensure this image exists in the correct folder
+import signupImage from "../images/pic3.jpg";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -15,75 +15,64 @@ const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
-  
+
     try {
-      const { data } = await axios.post("https://newmedizon.onrender.com/api/auth/register", {
+      const { data } = await axios.post("https://grammerly-backend.onrender.com/api/auth/register", {
         name,
         email,
         password,
         role,
       });
-  
+
       alert(
         role === "manufacturer"
-          ? "Signup successful! Waiting for Master Admin approval."
-          : "Signup successful! You can log in now."
+          ? "Signed up! Awaiting master admin approval."
+          : "Signed up successfully!"
       );
       navigate("/login");
-    } catch (error) {
-      alert(error.response?.data?.message || "Signup failed");
+    } catch (err) {
+      alert(err.response?.data?.message || "Signup failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        {/* Left-side Image */}
-        <div className="auth-image">
-          <img src={signupImage} alt="Signup" />
-        </div>
-
-        {/* Signup Form */}
-        <div className="auth-form">
-          <h2>Signup</h2>
-          <form onSubmit={handleSignup}>
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="manufacturer">Manufacturer</option>
-              <option value="master">Master</option> {/* ✅ FIXED: Use "master" instead of "admin" */}
-            </select>
-
-            <button type="submit" disabled={loading}>
-              {loading ? "Signing Up..." : "Signup"}
-            </button>
-          </form>
-          <p>
-            Already have an account? <Link to="/login">Login here</Link>
-          </p>
-        </div>
-      </div>
+    <div className="signup-container">
+      <h2>Signup</h2>
+      <form onSubmit={handleSignup}>
+        <input
+          type="text"
+          placeholder="Full Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        <input
+          type="email"
+          placeholder="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <select value={role} onChange={(e) => setRole(e.target.value)}>
+          <option value="manufacturer">Manufacturer</option>
+          <option value="master">Master</option>
+        </select>
+        <button type="submit" disabled={loading}>
+          {loading ? "Signing up..." : "Signup"}
+        </button>
+        <p>
+          Already have an account? <Link to="/login">Login</Link>
+        </p>
+      </form>
     </div>
   );
 };

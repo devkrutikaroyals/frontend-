@@ -1,31 +1,37 @@
-.auth-container {
+/* Container for both Login and Signup */
+.auth-container,
+.signup-container {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: #f9fafa;
-  padding: 20px; /* Ensures spacing around the container */
+  background: #ffffff;
+  padding: 20px;
+  /* For signup which might be simpler, center text */
+  flex-direction: column;
 }
 
-/* Larger Auth Box with Proper Padding & Margin */
+/* For forms with image (login or signup with image) */
 .auth-box {
   display: flex;
-  width: 850px; /* Increased width */
-  background: white;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  width: 850px;
+  background: #ffffff;
+  box-shadow: none;
   border-radius: 15px;
   overflow: hidden;
-  margin: 40px auto; /* Centered with more space around */
-  padding: 40px; /* Increased internal padding */
+  margin: 40px auto;
+  padding: 40px;
+  border: 1px solid #cccccc; /* light gray border */
+  flex-direction: row;
 }
 
-/* Image section (No margin/padding applied here) */
+/* Optional image section (used in login) */
 .auth-image {
-  flex: 1.2; /* Slightly bigger image section */
+  flex: 1.2;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eef2f7;
+  background: #ffffff;
   border-top-left-radius: 15px;
   border-bottom-left-radius: 15px;
 }
@@ -37,74 +43,103 @@
 }
 
 /* Form section */
-.auth-form {
+.auth-form,
+.signup-container form {
   flex: 1;
-  padding: 50px; /* More padding for a spacious form */
+  padding: 50px;
   text-align: center;
+  width: 100%;
+  max-width: 400px;
 }
 
-.auth-form h2 {
+/* For Signup without image, center box smaller */
+.signup-container {
+  max-width: 450px;
+  margin: 40px auto;
+  border: 1px solid #cccccc;
+  border-radius: 15px;
+  padding: 40px;
+  box-shadow: none;
+}
+
+/* Headings */
+.auth-form h2,
+.signup-container h2 {
   margin-bottom: 25px;
-  font-size: 24px; /* Bigger title */
+  font-size: 26px;
   color: #333;
 }
 
+/* Inputs and select */
 .auth-form input,
-.auth-form select {
+.auth-form select,
+.signup-container input,
+.signup-container select {
   width: 100%;
-  padding: 14px; /* Larger input fields */
+  padding: 14px;
   margin: 12px 0;
-  border: 1px solid #ccc;
+  border: 1px solid #cccccc;
   border-radius: 8px;
   font-size: 16px;
+  background-color: #ffffff;
+  color: #333;
+  transition: 0.2s ease-in-out;
 }
 
-.auth-form button {
+.auth-form input:focus,
+.auth-form select:focus,
+.signup-container input:focus,
+.signup-container select:focus {
+  outline: none;
+  border-color: #999999;
+  box-shadow: none;
+}
+
+/* Buttons */
+.auth-form button,
+.signup-container button {
   width: 100%;
-  padding: 14px; /* Larger button */
-  background: #007bff;
-  color: white;
-  border: none;
+  padding: 14px;
+  background: #ffffff;
+  color: #333333;
+  border: 1px solid #cccccc;
   border-radius: 8px;
   cursor: pointer;
   font-size: 18px;
   transition: background 0.3s ease-in-out;
 }
 
-.auth-form button:hover {
-  background: #0056b3;
+.auth-form button:hover,
+.signup-container button:hover {
+  background: #f0f0f0;
 }
 
-.auth-form p {
+/* Paragraphs and links */
+.auth-form p,
+.signup-container p {
   margin-top: 18px;
   color: #666;
   font-size: 14px;
 }
 
-.auth-form a {
-  color: #007bff;
+.auth-form a,
+.signup-container a {
+  color: #000000;
   text-decoration: none;
   font-weight: 600;
 }
 
-.auth-form a:hover {
+.auth-form a:hover,
+.signup-container a:hover {
   text-decoration: underline;
 }
 
-/* Responsive Design */
-@media (max-width: 900px) {
-  .auth-box {
-    width: 90%;
-    flex-direction: column;
-    padding: 30px; /* Keeps internal spacing on smaller screens */
-  }
+/* Optional: logo styling */
+.logo-wrapper {
+  margin-bottom: 20px;
+}
 
-  .auth-image {
-    display: none; /* Hide image on smaller screens */
-  }
-
-  .auth-form {
-    width: 100%;
-    padding: 30px;
-  }
+.site-logo {
+  width: 120px;
+  height: auto;
 }
